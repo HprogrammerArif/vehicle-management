@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const fuel_controller_1 = require("./fuel.controller");
+const auth_1 = require("../../middleware/auth");
+const router = (0, express_1.Router)();
+router.post('/', auth_1.authenticate, (0, auth_1.authorize)(['DRIVER', 'ADMIN']), fuel_controller_1.logFuel);
+router.get('/', auth_1.authenticate, fuel_controller_1.getFuelLogs);
+router.get('/analytics', auth_1.authenticate, (0, auth_1.authorize)(['ADMIN']), fuel_controller_1.getFuelAnalytics);
+exports.default = router;

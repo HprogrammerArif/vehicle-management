@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Apex VMS Mobile",
+    "slug": "apex-vms-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#020617"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Apex VMS requires location permissions to track vehicle transit during assigned missions.",
+        "NSLocationAlwaysUsageDescription": "Apex VMS streams GPS telemetry in the background during driving missions.",
+        "NSCameraUsageDescription": "Apex VMS requires camera access to photograph fuel station receipts."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#020617"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Apex VMS to track location during transit."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Apex VMS to upload fuel receipts."
+        }
+      ]
+    ],
+    "scheme": "vms-app"
+  }
+}

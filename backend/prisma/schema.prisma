@@ -1,0 +1,329 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+  DRIVER
+}
+
+enum TripType {
+  ONE_WAY
+  ROUND_TRIP
+  PICKUP_DROPOFF
+}
+
+enum TripStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_USE
+  IN_MAINTENANCE
+  RETIRED
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_TRIP
+  ON_LEAVE
+  INACTIVE
+}
+
+enum LeaveType {
+  SICK
+  VACATION
+  PERSONAL
+  HOLIDAY
+}
+
+enum MaintenanceType {
+  SCHEDULED
+  BREAKDOWN
+  TIRE_CHANGE
+  OIL_CHANGE
+  OTHER
+}
+
+enum ConvType {
+  TRIP_THREAD
+  SUPPORT
+  INCIDENT
+  GENERAL
+}
+
+enum MsgType {
+  TEXT
+  IMAGE
+  LOCATION_SHARE
+  SYSTEM_EVENT
+}
+
+// ==================== MODELS ====================
+
+model Organization {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  offices   Office[]
+  users     User[]
+  vehicles  Vehicle[]
+}
+
+model Office {
+  id             String       @id @default(cuid())
+  name           String
+  type           String       // HQ, REGIONAL, FACTORY, BRANCH
+  address        String
+  latitude       Float?
+  longitude      Float?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tripsFrom      Trip[]       @relation("TripFromOffice")
+  tripsTo        Trip[]       @relation("TripToOffice")
+  createdAt      DateTime     @default(now())
+}
+
+model User {
+  id             String         @id @default(cuid())
+  name           String
+  email          String         @unique
+  phone          String?
+  passwordHash   String
+  role           Role           @default(EMPLOYEE)
+  employeeId     String?
+  department     String?
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  profilePhoto   String?
+  fcmToken       String?
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  tripRequests   Trip[]         @relation("TripRequester")
+  driverProfile  Driver?
+  notifications  Notification[]
+  conversations  ConvParticipant[]
+  sentMessages   ChatMessage[]  @relation("SentMessages")
+}
+
+model Driver {
+  id             String        @id @default(cuid())
+  userId         String        @unique
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  licenseNumber  String        @unique
+  licenseExpiry  DateTime
+  status         DriverStatus  @default(AVAILABLE)
+  currentLat     Float?
+  currentLng     Float?
+  lastLocationAt DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  assignedTrips  Trip[]
+  leaveRequests  DriverLeave[]
+  fuelLogs       FuelLog[]
+}
+
+model Vehicle {
+  id              String           @id @default(cuid())
+  registrationNo  String           @unique
+  make            String           // Toyota, Nissan, etc.
+  model           String           // HiAce, Prado, Corolla
+  year            Int
+  type            String           // Sedan, SUV, Van, Bus, Truck
+  capacity        Int              // Seating capacity
+  fuelType        String           // PETROL, DIESEL, CNG, ELECTRIC, OCTANE
+  fuelEfficiency  Float            // km per liter (rated)
+  status          VehicleStatus    @default(AVAILABLE)
+  odometer        Float            @default(0) // Current km
+  organizationId  String
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  photo           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  trips           Trip[]
+  fuelLogs        FuelLog[]
+  maintenanceLogs MaintenanceLog[]
+}
+
+model Trip {
+  id              String          @id @default(cuid())
+  requesterId     String
+  requester       User            @relation("TripRequester", fields: [requesterId], references: [id])
+  vehicleId       String?
+  vehicle         Vehicle?        @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  driverId        String?
+  driver          Driver?         @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  fromOfficeId    String
+  fromOffice      Office          @relation("TripFromOffice", fields: [fromOfficeId], references: [id])
+  toOfficeId      String
+  toOffice        Office          @relation("TripToOffice", fields: [toOfficeId], references: [id])
+  purpose         String
+  tripType        TripType        @default(ONE_WAY)
+  status          TripStatus      @default(PENDING)
+  departureAt     DateTime
+  returnAt        DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  startOdometer   Float?
+  endOdometer     Float?
+  distanceCovered Float?
+  adminNotes      String?
+  rejectionReason String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  passengers      TripPassenger[]
+  trackingPoints  TrackingPoint[]
+  fuelLogs        FuelLog[]
+  conversation    Conversation?
+
+  @@index([status, departureAt])
+}
+
+model TripPassenger {
+  id     String @id @default(cuid())
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId String?
+  name   String
+  email  String?
+}
+
+model TrackingPoint {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  driverId  String
+  latitude  Float
+  longitude Float
+  speed     Float?   // km/h
+  heading   Float?   // degrees 0-360
+  timestamp DateTime @default(now())
+
+  @@index([tripId, timestamp])
+}
+
+model FuelLog {
+  id              String   @id @default(cuid())
+  vehicleId       String
+  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  driverId        String
+  driver          Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  tripId          String?
+  trip            Trip?    @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  odometerReading Float
+  fuelAdded       Float    // Liters
+  pricePerLiter   Float
+  totalCost       Float
+  receiptPhoto    String   // Image URL
+  stationName     String?
+  notes           String?
+  consumptionRate Float?   // Actual calculated km/L
+  isAnomaly       Boolean  @default(false)
+  loggedAt        DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([vehicleId, loggedAt])
+}
+
+model MaintenanceLog {
+  id          String          @id @default(cuid())
+  vehicleId   String
+  vehicle     Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  type        MaintenanceType @default(SCHEDULED)
+  description String
+  cost        Float?
+  odometerAt  Float?
+  scheduledAt DateTime?
+  completedAt DateTime?
+  isCompleted Boolean         @default(false)
+  notes       String?
+  createdAt   DateTime        @default(now())
+}
+
+model DriverLeave {
+  id         String    @id @default(cuid())
+  driverId   String
+  driver     Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  leaveType  LeaveType @default(SICK)
+  startDate  DateTime
+  endDate    DateTime
+  reason     String?
+  isApproved Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String   // TRIP_UPDATE, FUEL_ALERT, MAINTENANCE, GENERAL
+  isRead    Boolean  @default(false)
+  data      String?  // JSON serialized extra payload
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+model Conversation {
+  id           String            @id @default(cuid())
+  tripId       String?           @unique
+  trip         Trip?             @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  subject      String
+  type         ConvType          @default(GENERAL)
+  isResolved   Boolean           @default(false)
+  resolvedAt   DateTime?
+  participants ConvParticipant[]
+  messages     ChatMessage[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([tripId])
+}
+
+model ConvParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+  joinedAt       DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+}
+
+model ChatMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  body           String
+  attachmentUrl  String?
+  messageType    MsgType      @default(TEXT)
+  isSystem       Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+}

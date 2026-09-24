@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const tracking_controller_1 = require("./tracking.controller");
+const auth_1 = require("../../middleware/auth");
+const router = (0, express_1.Router)();
+router.get('/fleet', auth_1.authenticate, tracking_controller_1.getFleetLocations);
+router.get('/route/:tripId', auth_1.authenticate, tracking_controller_1.getTripRoute);
+router.post('/simulate/:tripId', auth_1.authenticate, tracking_controller_1.startTripSimulation);
+exports.default = router;

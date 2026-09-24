@@ -1,0 +1,68 @@
+So i applied in software company called apptriangel limited as a software engineer and they shortlisted me and assign me a task to create a management system something like vehicle management system. for their client. They explain me this task along with four other canditate. And the deadline for this task was 7 days. but already gone 3 days. 
+
+so basicall i have to finish the task in 4 days and need to submit it, and they will review and take interview.
+so if i able to meet theire rquirement and able to finish the task, then i will be hired as a software engineer.
+
+
+Senirio: They have a client which is a big company/ organization. For this organization, they have head quarter, reqional office, factory etc. 
+they have employees who visits one office to another office, factory and for official work anywhere in the country,  drivers and admin. 
+so let say exployee request to admin that i need a vehicle to go from location A to location B on a specific date and time. can be solo journey or with some other employees. maybe round trip or one way trip or pick up/drop off. 
+and admin asign a available vehicle and a available driver to the employee. 
+the employee also has to give details of the employees who will be travelling with him. 
+the request may be approved or rejected by the admin. 
+and 
+
+they have too many vehicles for their employee transport. 
+They want to manage those vehicles. so they want to create a web application for it. and i have to create it.
+
+1. So the system is something like vehical management.
+2. In the system there will be employees, drivers and admins.
+3. Admin will manage the vehicles, drivers and employee requests.
+4. Employee will request for a vehicle and admin will assign a vehicle and a driver to the employee.
+5. Driver will be assigned a vehicle and a employee request and he has to complete the journey.
+6. Admin can see all the requests and can approve or reject them.
+7. Employee can view history of all the requests. Driver can view history of all the assigned requests. Admin can view history of all the requests and can see all the vehicles and drivers.
+
+8. organization have different office, like head office, regional office, factory etc. and the vehicle can be assigned from one office to another office, or from one office to factory or from factory to office or from factory to factory.
+
+9. the trip can be round trip or one way trip or pick up/drop off.
+
+10. the trip can be solo, employee with employee, employee with other employee and so on.
+
+11. admin will look up available behicle and driver based on employee request.
+12. admin notify employee and driver about the assigned vehicle and driver.
+13. driver will start journey and notify admin about the start and end of the journey.
+14. after finishing the journey, the driver will notify admin about the end of the journey.
+15. admin will check if there anything wrong.
+16. admin notify employee and driver about the update.
+17. there will be also tracking system of the vehicle in the map. basically admin need to understand the current location of the vehicle and the distance it covered. using openstreet map.
+18. by the distance cover, we can also mesured the fuel consumed by the vehicle. based on the fuel efficiency of the vehicle.
+19. Admin has to manage the fuel of the vehicle. Admin has to maintain a record of fuel added to the vehicle and fuel consumed by the vehicle. and the km covered by the vehicle.
+20. maybe something more better, like driver will upload last time fuel added km, fuel added amount, fuel price, then also images. basically we need to done something so that everything get transperant. so that nothing theft happen.
+
+21. admin can see all the vehicles, drivers and employee requests. and can approve or reject them. admin can also update the status of the journey to completed or cancelled.
+
+22. employee can view history of all the requests. driver can view history of all the assigned requests. admin can view history of all the requests and can see all the vehicles and drivers.
+
+23. im planning there will be react native expo moblile app for employee and driver. and  for admin there will be a web app. which will be responsive, so it will run on desktop, laptop, tablet, mobile. 
+
+24. the overall system has to be location track system, push notification system, reporting system, vehicle management system, user management system, vehicle tracking system, fuel management system, maintenance management system,  fuel management system, vehicle management system, user management system, vehicle tracking system, fuel management system, maintenance management system.
+
+25. for the driver, sometime they may in sick leave, or vacation, or holiday, or personal work. and vehical also maybe in maintenance. so in that case admin has to manage all this things. admin has to manage all the drivers and vehicles. and has to assign them to the employees.
+
+26. they asked me to create a proper flow of the system. along with database schema, database diagram, and i have to explain it to them. and if they like it then they will hire me. we have to make prototype also so that i can run the project and show them. 
+so the location tracking system also must be there. 
+
+
+27. the data that will be shown in the map must be real time, like if the vehicle is moving, then the marker should move in the map. 
+
+28. they want to see how the system will work. so i have to create a prototype of the system. 
+
+29. for the admin panel dashboard, i want to use react. tailwind, shadcn ui, and thing that are required. basically all the admin panel dashboard should be there. 
+
+30. for the employee and driver app, i want to use react native expo, for styling stylesheet, maybe nativewind (whatever best), zustand for state management.
+
+31. for the backend, would like to use expressjs, typescript, and prisma for orm, and maybe postgresql database using neon.
+
+
+make sure one things: i have to impresss them by my work. i would like to follow all the sdlc part. we have to create a proper flow of the system, proper database schema, database diagram, and i have to explain it to them. and if they like it then they will hire me. we have to make prototype also so that i can run the project and show them. 
