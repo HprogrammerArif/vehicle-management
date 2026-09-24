@@ -1,5 +1,6 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
+import { ApexLogo } from '../common/ApexLogo';
 import {
   LayoutDashboard,
   MapPin,
@@ -49,14 +50,8 @@ export const Sidebar: React.FC = () => {
     <aside className="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col justify-between h-screen fixed left-0 top-0 z-30 select-none">
       <div>
         {/* Brand Header */}
-        <div className="h-16 flex items-center px-6 border-b border-slate-800 gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Truck className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="font-display font-bold text-lg text-white tracking-wide">Apex VMS</h1>
-            <p className="text-xs text-indigo-400 font-medium">Enterprise Fleet OS</p>
-          </div>
+        <div className="h-20 flex items-center px-6 border-b border-slate-800">
+          <ApexLogo variant="full" size="md" />
         </div>
 
         {/* Navigation Section */}

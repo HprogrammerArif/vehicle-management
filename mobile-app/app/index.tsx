@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMobileStore, DEFAULT_EMPLOYEE, DEFAULT_DRIVER } from '../src/store/useMobileStore';
 import { authApi } from '../src/services/api';
@@ -52,7 +52,11 @@ export default function IndexScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.logoBadge}>
-          <Text style={styles.logoText}>🚗</Text>
+          <Image
+            source={require('../assets/icon.png')}
+            style={styles.logoImage}
+            resizeMode="cover"
+          />
         </View>
         <Text style={styles.title}>Apex VMS</Text>
         <Text style={styles.subtitle}>Enterprise Transit & Driver Telemetry</Text>
@@ -115,16 +119,25 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   logoBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: '#4f46e5',
+    width: 76,
+    height: 76,
+    borderRadius: 22,
+    backgroundColor: '#0f172a',
+    borderWidth: 1.5,
+    borderColor: '#38bdf8',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    overflow: 'hidden',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  logoText: {
-    fontSize: 32,
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 26,

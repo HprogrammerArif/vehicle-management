@@ -3,9 +3,12 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { mobileApi } from '../../src/services/api';
+import { getMobileSocket } from '../../src/services/socket';
+import { useMobileStore } from '../../src/store/useMobileStore';
 
 export default function ActiveTripScreen() {
   const router = useRouter();
+  const { user } = useMobileStore();
   const [status, setStatus] = useState<'READY' | 'IN_TRANSIT' | 'COMPLETED'>('READY');
   const [locationWatcher, setLocationWatcher] = useState<any>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -20,7 +23,7 @@ export default function ActiveTripScreen() {
 
     setStatus('IN_TRANSIT');
 
-    // Subscribe to GPS location updates
+    // Subscribe to GPS location updates & stream to central admin gateway
     const watcher = await Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.High,
@@ -29,6 +32,17 @@ export default function ActiveTripScreen() {
       },
       (loc) => {
         setCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+
+        const socket = getMobileSocket();
+        socket.emit('location:update', {
+          tripId: 'cmuf7t5jg000rf6wpydjqjr8x',
+          vehicleId: 'cmuf7t2m6000lf6wpsjwhb0i5',
+          driverId: user?.driverId || 'cmuf7sv730009f6wp06cs1lke',
+          lat: loc.coords.latitude,
+          lng: loc.coords.longitude,
+          speed: loc.coords.speed && loc.coords.speed > 0 ? loc.coords.speed * 3.6 : 48,
+          heading: loc.coords.heading || 45,
+        });
       }
     );
     setLocationWatcher(watcher);
@@ -39,6 +53,12 @@ export default function ActiveTripScreen() {
     if (locationWatcher) {
       locationWatcher.remove();
     }
+    const socket = getMobileSocket();
+    socket.emit('trip:status_change', {
+      tripId: 'cmuf7t5jg000rf6wpydjqjr8x',
+      status: 'COMPLETED',
+    });
+
     setStatus('COMPLETED');
     Alert.alert('Mission Accomplished', 'Trip finalized. Vehicle and driver status updated to Available.');
   };
