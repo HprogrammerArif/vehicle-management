@@ -230,3 +230,50 @@
 {"_e":"metro:client_log","_t":1790306820986,"level":"log","data":["Mobile Socket connected:","TpSJ1cUIgxfxxVAcAAAB"]}
 {"_e":"metro:client_log","_t":1790306842545,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
 {"_e":"metro:client_log","_t":1790306845104,"level":"log","data":["Mobile Socket connected:","Cbx6t3ROvh18dHOyAAAB"]}
+{"_e":"metro:client_log","_t":1790307980097,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790307983048,"level":"log","data":["Mobile Socket connected:","ru1LohEE2b0pt_gpAAAB"]}
+{"_e":"metro:client_log","_t":1790308003198,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790308006156,"level":"log","data":["Mobile Socket connected:","tR19uRtTcfK3YvKGAAAB"]}
+{"_e":"metro:client_log","_t":1790308020481,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790308023255,"level":"log","data":["Mobile Socket connected:","pp9toQTwu45NXbFgAAAB"]}
+{"_e":"metro:client_log","_t":1790308054888,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790308058433,"level":"log","data":["Mobile Socket connected:","5bErqvWtNG2-sUDAAAAB"]}
+{"_e":"metro:client_log","_t":1790308078856,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790308081550,"level":"log","data":["Mobile Socket connected:","d3ibhRdLmelykVo4AAAB"]}
+{"_e":"metro:client_log","_t":1790308526233,"level":"warn","data":["expo-secure-store not available, using in-memory storage"]}
+{"_e":"metro:client_log","_t":1790308553658,"level":"warn","data":["[Layout children]: No route named \"(driver)/my-trips\" exists in nested children:","[\"index\", \"(driver)/active-trip\", \"(driver)/conversations\", \"(driver)/fuel-log\", \"(driver)/notifications\", \"(driver)/chat/[id]\", \"(employee)/conversations\", \"(employee)/my-trips\", \"(employee)/notifications\", \"(employee)/request-trip\", \"(employee)/chat/[id]\"]"]}
+{"_e":"metro:client_log","_t":1790308553744,"level":"warn","data":["[Layout children]: No route named \"(driver)/my-trips\" exists in nested children:","[\"index\", \"(driver)/active-trip\", \"(driver)/conversations\", \"(driver)/fuel-log\", \"(driver)/notifications\", \"(driver)/chat/[id]\", \"(employee)/conversations\", \"(employee)/my-trips\", \"(employee)/notifications\", \"(employee)/request-trip\", \"(employee)/chat/[id]\"]"]}
+{"_e":"metro:bundling:failed","_t":1790308677875,"id":null,"message":"SyntaxError: C:\\dev\\VM\\mobile-app\\app\\(driver)\\active-trip.tsx: Unexpected token, expected \"}\" (336:11)\n\n  334 |\n  335 | const styles = StyleSheet.create({\n> 336 |   container: { flex: 1, backgroundColor: '#020617' },\n      |            ^\n  337 |   scroll: { padding: 20, paddingBottom: 40 },\n  338 |   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#020617', gap: 12 },\n  339 |   loadingText: { color: '#64748b', fontSize: 13 },","importStack":null,"filename":"app\\(driver)\\active-trip.tsx","targetModuleName":null,"originModulePath":null}
+{"_e":"metro:bundling:failed","_t":1790308678082,"id":null,"message":"SyntaxError: C:\\dev\\VM\\mobile-app\\app\\(driver)\\active-trip.tsx: Unexpected token, expected \"}\" (336:11)\n\n  334 |\n  335 | const styles = StyleSheet.create({\n> 336 |   container: { flex: 1, backgroundColor: '#020617' },\n      |            ^\n  337 |   scroll: { padding: 20, paddingBottom: 40 },\n  338 |   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#020617', gap: 12 },\n  339 |   loadingText: { color: '#64748b', fontSize: 13 },","importStack":null,"filename":"app\\(driver)\\active-trip.tsx","targetModuleName":null,"originModulePath":null}
+{"_e":"metro:client_log","_t":1790309041076,"level":"warn","data":["[expo-image-picker] `ImagePicker.MediaTypeOptions` have been deprecated. Use `ImagePicker.MediaType` or an array of `ImagePicker.MediaType` instead."]}
+{"_e":"metro:client_log","_t":1790309260176,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790309263616,"level":"log","data":["Mobile Socket connected:","NED0DkrCO8rcG4FAAAAB"]}
+{"_e":"metro:client_log","_t":1790311144000,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790311148760,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790311153869,"level":"log","data":["Mobile Socket connected:","4lXtN5giPUADYsuQAAAB"]}
+{"_e":"metro:client_log","_t":1790311158916,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790311161419,"level":"log","data":["Mobile Socket connected:","6ODAFB0FxgiSeG-vAAAB"]}
+{"_e":"metro:bundling:started","_t":1790312082594,"id":"4","platform":"android","environment":null,"entry":"..\\..\\..\\p\\expo-router@57.0.22_2d6a8199405e0fbcde0a2189059fb669\\node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790312082594,"id":"4","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790312082707,"id":"4","total":1,"ms":112.4811}
+{"_e":"metro:client_log","_t":1790312087304,"level":"warn","data":["expo-secure-store not available, using in-memory storage"]}
+{"_e":"metro:client_log","_t":1790312088245,"level":"log","data":["Mobile Socket connected:","iXu4IMDxSmF2sNaXAAAD"]}
+{"_e":"metro:client_log","_t":1790312967990,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790312970767,"level":"log","data":["Mobile Socket connected:","D5gBHTgK4z5cmiICAAAB"]}
+{"_e":"metro:client_log","_t":1790315364483,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790315366625,"level":"log","data":["Mobile Socket connected:","Dpw_5-B9RvTlUszaAAAB"]}
+{"_e":"metro:client_log","_t":1790316622468,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790316624851,"level":"log","data":["Mobile Socket connected:","7Ww_gjj636Gn2oyhAAAB"]}
+{"_e":"metro:client_log","_t":1790316866625,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790316868649,"level":"log","data":["Mobile Socket connected:","Vle5d8-8M_S9w4CyAAAB"]}
+{"_e":"metro:client_log","_t":1790326726308,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790326730567,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790326737644,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790326744689,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790326751727,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790326758765,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790326765845,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790326772928,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790326779981,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790326787056,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790326794102,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
