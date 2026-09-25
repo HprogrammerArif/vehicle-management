@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { api } from '../lib/api';
-import { DashboardStats, Trip } from '../types';
+import { Trip } from '../types';
+import { useDashboardStats, useTrips, useInvalidate, QK } from '../hooks/useVmsQueries';
 import { LiveFleetMap } from '../components/map/LiveFleetMap';
 import { AssignTripModal } from '../components/trips/AssignTripModal';
 import {
@@ -14,29 +15,77 @@ import {
   Clock,
   ArrowRight,
   ShieldAlert,
+  Bell,
+  Send,
+  MapPin,
 } from 'lucide-react';
 
+/** Resolves display location — office name OR custom free-text address */
+function routeLabel(trip: Trip): { from: string; to: string } {
+  return {
+    from: trip.fromOffice?.name || trip.pickupAddress || '—',
+    to: trip.toOffice?.name || trip.dropoffAddress || '—',
+  };
+}
+
+const NOTIFICATION_TARGETS = [
+  { value: 'ALL_EMPLOYEES', label: '👤 All Employees' },
+  { value: 'ALL_DRIVERS', label: '🚗 All Drivers' },
+  { value: 'ALL', label: '📢 Everyone' },
+  { value: 'TRIP', label: '🛣️ Specific Trip' },
+  { value: 'USER', label: '🎯 Specific Person' },
+];
+
 export const Dashboard: React.FC = () => {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [pendingTrips, setPendingTrips] = useState<Trip[]>([]);
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: pendingTrips = [], isLoading: tripsLoading } = useTrips('PENDING');
+  const invalidate = useInvalidate();
+  const loading = statsLoading || tripsLoading;
+
   const [selectedTripToAssign, setSelectedTripToAssign] = useState<Trip | null>(null);
-  const [loading, setLoading] = useState(true);
   const { setActiveTab } = useStore();
 
-  const loadData = async () => {
-    setLoading(true);
-    const [statsRes, tripsRes] = await Promise.all([
-      api.getStats(),
-      api.getTrips('?status=PENDING'),
-    ]);
-    if (statsRes.data) setStats(statsRes.data);
-    if (tripsRes.data) setPendingTrips(tripsRes.data);
-    setLoading(false);
-  };
+  // Notification state
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifBody, setNotifBody] = useState('');
+  const [notifTarget, setNotifTarget] = useState('ALL_EMPLOYEES');
+  const [notifTargetId, setNotifTargetId] = useState('');
+  const [sendingNotif, setSendingNotif] = useState(false);
+  const [notifSent, setNotifSent] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+
+  const handleSendNotification = async () => {
+    if (!notifTitle.trim() || !notifBody.trim()) return;
+    if ((notifTarget === 'TRIP' || notifTarget === 'USER') && !notifTargetId.trim()) return;
+    setSendingNotif(true);
+    try {
+      const payload: any = {
+        title: notifTitle.trim(),
+        body: notifBody.trim(),
+        target: notifTarget,
+      };
+      if (notifTarget === 'TRIP') {
+        payload.tripId = notifTargetId.trim();
+      } else if (notifTarget === 'USER') {
+        payload.userId = notifTargetId.trim();
+      }
+
+      const res = await api.sendNotification(payload);
+      if (res.success) {
+        setNotifSent(true);
+        setNotifTitle('');
+        setNotifBody('');
+        setNotifTargetId('');
+        setTimeout(() => setNotifSent(false), 3000);
+        // Refresh stats after notification send
+        invalidate(QK.stats);
+      } else {
+        alert(res.message || 'Failed to send notification');
+      }
+    } finally {
+      setSendingNotif(false);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -50,7 +99,7 @@ export const Dashboard: React.FC = () => {
         </p>
       </div>
 
-      {/* Fuel Anomaly Warning Banner if any exist */}
+      {/* Fuel Anomaly Warning Banner */}
       {stats && stats.fuel.anomalyCount > 0 && (
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between shadow-lg shadow-amber-500/5">
           <div className="flex items-center gap-3">
@@ -59,7 +108,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <div>
               <h4 className="text-sm font-bold text-amber-300">
-                🚨 Fuel Audit Alert: {stats.fuel.anomalyCount} Suspected Consumption Anomaly Detected
+                🚨 Fuel Audit Alert: {stats.fuel.anomalyCount} Suspected Consumption Anomaly
               </h4>
               <p className="text-xs text-amber-400/80">
                 A refuel log deviated significantly from rated efficiency. Please review receipt proof.
@@ -70,30 +119,23 @@ export const Dashboard: React.FC = () => {
             onClick={() => setActiveTab('fuel')}
             className="px-3.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold transition"
           >
-            Review Fuel Logs &rarr;
+            Review Fuel Logs →
           </button>
         </div>
       )}
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Vehicles Status */}
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Fleet Capacity
-            </span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Fleet Capacity</span>
             <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
               <Truck className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-3xl font-display font-extrabold text-white">
-              {stats?.vehicles.total || 4}
-            </span>
-            <span className="text-xs text-emerald-400 font-semibold">
-              {stats?.vehicles.available || 2} Available
-            </span>
+            <span className="text-3xl font-display font-extrabold text-white">{stats?.vehicles.total || 4}</span>
+            <span className="text-xs text-emerald-400 font-semibold">{stats?.vehicles.available || 2} Available</span>
           </div>
           <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
             <span className="w-2 h-2 rounded-full bg-blue-500" />
@@ -103,46 +145,32 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Trips Status */}
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Active Missions
-            </span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Missions</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
               <Compass className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-3xl font-display font-extrabold text-white">
-              {stats?.trips.active || 1}
-            </span>
-            <span className="text-xs text-indigo-400 font-semibold">
-              {stats?.trips.pending || 1} Pending Approval
-            </span>
+            <span className="text-3xl font-display font-extrabold text-white">{stats?.trips.active || 1}</span>
+            <span className="text-xs text-indigo-400 font-semibold">{stats?.trips.pending || 1} Pending</span>
           </div>
           <div className="mt-3 text-xs text-slate-400">
             <span>{stats?.trips.completed || 2} completed this week</span>
           </div>
         </div>
 
-        {/* Drivers Availability */}
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Driver Roster
-            </span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Driver Roster</span>
             <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-3xl font-display font-extrabold text-white">
-              {stats?.drivers.total || 3}
-            </span>
-            <span className="text-xs text-emerald-400 font-semibold">
-              {stats?.drivers.available || 1} Ready
-            </span>
+            <span className="text-3xl font-display font-extrabold text-white">{stats?.drivers.total || 3}</span>
+            <span className="text-xs text-emerald-400 font-semibold">{stats?.drivers.available || 1} Ready</span>
           </div>
           <div className="mt-3 text-xs text-slate-400 flex items-center gap-2">
             <span>{stats?.drivers.onTrip || 1} driving</span>
@@ -151,12 +179,9 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Fuel Economy & Spend */}
         <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Fleet Fuel Audit
-            </span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Fleet Fuel Audit</span>
             <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-400">
               <Fuel className="w-4 h-4" />
             </div>
@@ -173,7 +198,7 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Center: Live Fleet OpenStreetMap */}
+      {/* Live Fleet Map */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -193,61 +218,205 @@ export const Dashboard: React.FC = () => {
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
-
         <LiveFleetMap height="420px" />
       </div>
 
-      {/* Pending Dispatch Queue */}
-      <div className="glass-card p-6 rounded-2xl space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div>
-            <h3 className="font-display font-bold text-lg text-white">Pending Trip Requests</h3>
-            <p className="text-xs text-slate-400">
-              Employee travel requests awaiting vehicle and driver assignment.
-            </p>
+      {/* Two-column row: Pending Trips + Send Notification */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Pending Dispatch Queue — takes 2/3 width */}
+        <div className="lg:col-span-2 glass-card p-6 rounded-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div>
+              <h3 className="font-display font-bold text-lg text-white">Pending Trip Requests</h3>
+              <p className="text-xs text-slate-400">
+                Employee vehicle requisitions awaiting assignment.
+              </p>
+            </div>
+            <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">
+              {pendingTrips.length} Awaiting
+            </span>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">
-            {pendingTrips.length} Awaiting Dispatch
-          </span>
+
+          {pendingTrips.length === 0 ? (
+            <div className="py-8 text-center text-slate-500 text-sm">
+              ✓ No pending requests. All employee bookings dispatched!
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-800/80">
+              {pendingTrips.map((trip) => {
+                const route = routeLabel(trip);
+                const isCustom = !trip.fromOfficeId;
+                return (
+                  <div key={trip.id} className="py-4 flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-white text-sm">{trip.requester?.name}</span>
+                        {trip.requester?.department && (
+                          <span className="text-[10px] text-slate-500">{trip.requester.department}</span>
+                        )}
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                          {trip.tripType.replace('_', ' ')}
+                        </span>
+                        {isCustom && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            📍 Custom Location
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Route */}
+                      <div className="flex items-start gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-slate-500 mt-0.5 shrink-0" />
+                        <p className="text-xs text-slate-300 font-medium">
+                          {route.from} → {route.to}
+                        </p>
+                      </div>
+
+                      <p className="text-xs text-slate-500 italic">"{trip.purpose}"</p>
+
+                      {/* Passengers */}
+                      {trip.passengers && trip.passengers.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                          <Users className="w-3 h-3 text-slate-500" />
+                          <span className="text-[10px] text-slate-500">+{trip.passengers.length} colleague(s):</span>
+                          {trip.passengers.map((p) => (
+                            <span
+                              key={p.id}
+                              className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400"
+                            >
+                              {p.name}{p.employeeId ? ` (${p.employeeId})` : ''}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="text-[11px] text-indigo-300 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Departure: {new Date(trip.departureAt).toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedTripToAssign(trip)}
+                      className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/25 transition shrink-0"
+                    >
+                      Assign Vehicle &amp; Driver
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {pendingTrips.length === 0 ? (
-          <div className="py-8 text-center text-slate-500 text-sm">
-            ✓ No pending trip requests. All employee bookings dispatched!
+        {/* Send Notification Panel — takes 1/3 width */}
+        <div className="glass-card p-6 rounded-2xl space-y-4 border border-slate-800">
+          <div className="flex items-center gap-2 border-b border-slate-800 pb-4">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+              <Bell className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-bold text-white text-sm">Send Notification</h3>
+              <p className="text-[11px] text-slate-400">Broadcast to employees or drivers</p>
+            </div>
           </div>
-        ) : (
-          <div className="divide-y divide-slate-800/80">
-            {pendingTrips.map((trip) => (
-              <div key={trip.id} className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-white text-sm">{trip.requester?.name}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-                      {trip.tripType.replace('_', ' ')}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300 font-medium">
-                    {trip.fromOffice.name} &rarr; {trip.toOffice.name}
-                  </p>
-                  <p className="text-xs text-slate-500 italic">Purpose: "{trip.purpose}"</p>
-                  <div className="text-[11px] text-indigo-300 flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Departure: {new Date(trip.departureAt).toLocaleString()}</span>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setSelectedTripToAssign(trip)}
-                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/25 transition"
-                  >
-                    Assign Vehicle & Driver
-                  </button>
-                </div>
+          {/* Target */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target</label>
+            <div className="space-y-1.5">
+              {NOTIFICATION_TARGETS.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => {
+                    setNotifTarget(t.value);
+                    setNotifTargetId('');
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition border ${
+                    notifTarget === t.value
+                      ? 'bg-indigo-600/20 border-indigo-500/40 text-indigo-300'
+                      : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Dynamic Specific Target Input */}
+            {notifTarget === 'TRIP' && (
+              <div className="pt-1">
+                <input
+                  type="text"
+                  value={notifTargetId}
+                  onChange={(e) => setNotifTargetId(e.target.value)}
+                  placeholder="Trip ID (e.g. cmu...)"
+                  className="w-full bg-slate-900 border border-indigo-500/40 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 transition"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">Notifies requester, assigned driver &amp; passengers</p>
               </div>
-            ))}
+            )}
+
+            {notifTarget === 'USER' && (
+              <div className="pt-1">
+                <input
+                  type="text"
+                  value={notifTargetId}
+                  onChange={(e) => setNotifTargetId(e.target.value)}
+                  placeholder="Employee ID or Email (e.g. EMP-104)"
+                  className="w-full bg-slate-900 border border-indigo-500/40 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 transition"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">Delivers directly to specific user inbox</p>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Title */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Title</label>
+            <input
+              type="text"
+              value={notifTitle}
+              onChange={(e) => setNotifTitle(e.target.value)}
+              placeholder="e.g. Office Closure Today"
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition"
+            />
+          </div>
+
+          {/* Message */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Message</label>
+            <textarea
+              value={notifBody}
+              onChange={(e) => setNotifBody(e.target.value)}
+              placeholder="Type your message to all recipients…"
+              rows={3}
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition resize-none"
+            />
+          </div>
+
+          {/* Send Button */}
+          <button
+            onClick={handleSendNotification}
+            disabled={sendingNotif || !notifTitle.trim() || !notifBody.trim()}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-bold text-sm transition shadow-md shadow-indigo-600/20"
+          >
+            {sendingNotif ? (
+              <span className="animate-pulse">Sending…</span>
+            ) : notifSent ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span className="text-emerald-300">Sent!</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                <span>Send Notification</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Assignment Modal */}
@@ -257,7 +426,8 @@ export const Dashboard: React.FC = () => {
           onClose={() => setSelectedTripToAssign(null)}
           onSuccess={() => {
             setSelectedTripToAssign(null);
-            loadData();
+            invalidate(QK.stats);
+            invalidate(QK.trips('PENDING'));
           }}
         />
       )}

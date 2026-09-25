@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { ChatMessage } from '../../types';
 import { useStore } from '../../store/useStore';
 import { TypingIndicator } from './TypingIndicator';
@@ -114,10 +114,11 @@ export const MessageThread: React.FC<MessageThreadProps> = ({ messages, isTyping
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom only when message count changes — not on every isTyping flicker
+  const msgCount = messages.length;
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+  }, [msgCount, isTyping]);
 
   if (messages.length === 0) {
     return (
@@ -146,6 +147,8 @@ export const MessageThread: React.FC<MessageThreadProps> = ({ messages, isTyping
     <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
       {messages.map((msg, idx) => {
         const isSelf = msg.senderId === user?.id;
+        // Optimistic temp messages get a subtle sending state
+        const isSending = msg.id.startsWith('temp_');
         const currentDateLabel = formatDateSeparator(msg.createdAt);
         const showDateSep = currentDateLabel !== lastDateLabel;
         lastDateLabel = currentDateLabel;
@@ -237,7 +240,7 @@ export const MessageThread: React.FC<MessageThreadProps> = ({ messages, isTyping
                 <div
                   className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm transition-all ${
                     isSelf
-                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-br-xs'
+                      ? `bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-br-xs${isSending ? ' opacity-60' : ''}`
                       : 'bg-slate-800/95 text-slate-100 border border-slate-700/60 rounded-bl-xs'
                   }`}
                 >
@@ -282,10 +285,15 @@ export const MessageThread: React.FC<MessageThreadProps> = ({ messages, isTyping
                       isSelf ? 'justify-end text-indigo-200' : 'justify-start text-slate-400'
                     }`}
                   >
-                    <span>{formatTime(msg.createdAt)}</span>
-                    {isSelf && (
+                    <span>{isSending ? 'Sending…' : formatTime(msg.createdAt)}</span>
+                    {isSelf && !isSending && (
                       <span title="Delivered">
                         <CheckCheck className="w-3.5 h-3.5 text-cyan-300" />
+                      </span>
+                    )}
+                    {isSelf && isSending && (
+                      <span title="Sending">
+                        <Check className="w-3.5 h-3.5 opacity-40" />
                       </span>
                     )}
                   </div>

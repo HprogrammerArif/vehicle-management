@@ -104,10 +104,12 @@ erDiagram
     TRIP {
         string id PK
         string requesterId FK
-        string vehicleId FK
-        string driverId FK
-        string fromOfficeId FK
-        string toOfficeId FK
+        string vehicleId FK "nullable"
+        string driverId FK "nullable"
+        string fromOfficeId FK "nullable"
+        string toOfficeId FK "nullable"
+        string pickupAddress "custom origin"
+        string dropoffAddress "custom destination"
         string purpose
         enum tripType "ONE_WAY | ROUND_TRIP | PICKUP_DROPOFF"
         enum status "PENDING | APPROVED | REJECTED | IN_PROGRESS | COMPLETED | CANCELLED"
@@ -125,9 +127,12 @@ erDiagram
     TRIP_PASSENGER {
         string id PK
         string tripId FK
-        string userId
+        string userId FK "nullable linked employee"
+        string employeeId "e.g. EMP-109"
         string name
         string email
+        string department
+        string phone
     }
 
     TRACKING_POINT {

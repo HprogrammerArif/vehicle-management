@@ -60,6 +60,7 @@ export interface Driver {
     name: string;
     email: string;
     phone?: string | null;
+    employeeId?: string | null;
   };
   _count?: {
     assignedTrips: number;
@@ -70,8 +71,12 @@ export interface Driver {
 
 export interface TripPassenger {
   id: string;
+  userId?: string | null;
+  employeeId?: string | null;
   name: string;
   email?: string | null;
+  department?: string | null;
+  phone?: string | null;
 }
 
 export interface Trip {
@@ -88,10 +93,12 @@ export interface Trip {
   vehicle?: Vehicle | null;
   driverId?: string | null;
   driver?: Driver | null;
-  fromOfficeId: string;
-  fromOffice: Office;
-  toOfficeId: string;
-  toOffice: Office;
+  fromOfficeId?: string | null;
+  fromOffice?: Office | null;
+  toOfficeId?: string | null;
+  toOffice?: Office | null;
+  pickupAddress?: string | null;   // custom free-text pickup
+  dropoffAddress?: string | null;  // custom free-text dropoff
   purpose: string;
   tripType: TripType;
   status: TripStatus;

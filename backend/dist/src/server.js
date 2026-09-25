@@ -24,6 +24,8 @@ const tracking_routes_1 = __importDefault(require("./modules/tracking/tracking.r
 const dashboard_routes_1 = __importDefault(require("./modules/dashboard/dashboard.routes"));
 const chat_routes_1 = __importDefault(require("./modules/chat/chat.routes"));
 const chat_controller_1 = require("./modules/chat/chat.controller");
+const notifications_routes_1 = __importDefault(require("./modules/notifications/notifications.routes"));
+const notifications_controller_1 = require("./modules/notifications/notifications.controller");
 const app = (0, express_1.default)();
 exports.app = app;
 const server = http_1.default.createServer(app);
@@ -39,10 +41,13 @@ exports.io = io;
 (0, socketHandler_1.initializeSockets)(io);
 (0, tracking_controller_1.setTrackingIo)(io);
 (0, chat_controller_1.setChatIo)(io);
+(0, notifications_controller_1.setNotificationIo)(io);
+const path_1 = __importDefault(require("path"));
 // Middleware
 app.use((0, cors_1.default)({ origin: '*' }));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../uploads')));
 // Health Check
 app.get('/api/health', (req, res) => {
     res.json({
@@ -62,6 +67,7 @@ app.use('/api/maintenance', maintenance_routes_1.default);
 app.use('/api/tracking', tracking_routes_1.default);
 app.use('/api/dashboard', dashboard_routes_1.default);
 app.use('/api/chat', chat_routes_1.default);
+app.use('/api/notifications', notifications_routes_1.default);
 // Error Handler Middleware
 app.use(error_1.errorHandler);
 // Start Server

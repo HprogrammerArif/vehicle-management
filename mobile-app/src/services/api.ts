@@ -2,7 +2,7 @@ import { useMobileStore } from '../store/useMobileStore';
 
 // Mobile API Client
 // Note: For local development on physical Android device or emulator, replace localhost with your LAN IP (e.g. 192.168.x.x)
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://10.10.29.137:5000/api';
 
 export async function mobileApi<T = any>(
   endpoint: string,
@@ -32,13 +32,42 @@ export async function mobileApi<T = any>(
 
 // Auth API methods
 export const authApi = {
-  login: (email: string, password: string) => {
+  // identifier can be employeeId (EMP-001) or email
+  login: (identifier: string, password: string) => {
     return mobileApi('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     });
   },
   getMe: () => mobileApi('/auth/me'),
+  updateFcmToken: (fcmToken: string) =>
+    mobileApi('/auth/fcm-token', {
+      method: 'PATCH',
+      body: JSON.stringify({ fcmToken }),
+    }),
+  // Look up an employee by their employeeId (e.g. EMP-104)
+  lookupEmployee: (employeeId: string) =>
+    mobileApi(`/auth/lookup-employee?employeeId=${encodeURIComponent(employeeId)}`),
+};
+
+// Trips API
+export const tripsApi = {
+  getMyTrips: () => mobileApi('/trips/my'),
+  getOffices: () => mobileApi('/offices'),
+  createTrip: (data: object) =>
+    mobileApi('/trips', { method: 'POST', body: JSON.stringify(data) }),
+  startTrip: (id: string, startOdometer?: number) =>
+    mobileApi(`/trips/${id}/start`, { method: 'PUT', body: JSON.stringify({ startOdometer }) }),
+  completeTrip: (id: string, endOdometer: number) =>
+    mobileApi(`/trips/${id}/complete`, { method: 'PUT', body: JSON.stringify({ endOdometer }) }),
+};
+
+
+// Notifications API
+export const notificationsApi = {
+  getMyNotifications: () => mobileApi('/notifications/my'),
+  markRead: (id: string) => mobileApi(`/notifications/${id}/read`, { method: 'PATCH' }),
+  markAllRead: () => mobileApi('/notifications/read-all', { method: 'PATCH' }),
 };
 
 // Chat API methods

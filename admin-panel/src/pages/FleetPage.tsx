@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Vehicle, VehicleStatus } from '../types';
 import { api } from '../lib/api';
+import { useVehicles, useInvalidate, QK } from '../hooks/useVmsQueries';
 import { Truck, Plus, Gauge, Fuel, Users, Wrench, CheckCircle } from 'lucide-react';
 
 export const FleetPage: React.FC = () => {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [filter, setFilter] = useState<string>('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -21,22 +21,17 @@ export const FleetPage: React.FC = () => {
     odometer: '10000',
   });
 
-  const loadVehicles = async () => {
-    const query = filter !== 'ALL' ? `?status=${filter}` : '';
-    const res = await api.getVehicles(query);
-    if (res.data) setVehicles(res.data);
-  };
+  const { data: vehicles = [], isLoading } = useVehicles(filter !== 'ALL' ? filter : undefined);
+  const invalidate = useInvalidate();
 
-  useEffect(() => {
-    loadVehicles();
-  }, [filter]);
+  const refetch = () => invalidate(QK.vehicles(filter !== 'ALL' ? filter : undefined));
 
   const handleCreateVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await api.createVehicle(form);
     if (res.success) {
       setShowAddModal(false);
-      loadVehicles();
+      refetch();
     } else {
       alert(res.message || 'Error creating vehicle');
     }
@@ -44,7 +39,7 @@ export const FleetPage: React.FC = () => {
 
   const handleUpdateStatus = async (id: string, status: VehicleStatus) => {
     await api.updateVehicle(id, { status });
-    loadVehicles();
+    refetch();
   };
 
   const statusColors: Record<VehicleStatus, string> = {
@@ -184,7 +179,7 @@ export const FleetPage: React.FC = () => {
 
       {/* Add Vehicle Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
             <h3 className="font-display font-bold text-white text-lg">Add New Fleet Vehicle</h3>
             <form onSubmit={handleCreateVehicle} className="space-y-3">

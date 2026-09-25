@@ -105,7 +105,7 @@ model User {
   phone          String?
   passwordHash   String
   role           Role           @default(EMPLOYEE)
-  employeeId     String?
+  employeeId     String?        @unique
   department     String?
   organizationId String
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -120,6 +120,7 @@ model User {
   notifications  Notification[]
   conversations  ConvParticipant[]
   sentMessages   ChatMessage[]  @relation("SentMessages")
+  passengerTrips TripPassenger[]
 }
 
 model Driver {
@@ -171,10 +172,12 @@ model Trip {
   vehicle         Vehicle?        @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
   driverId        String?
   driver          Driver?         @relation(fields: [driverId], references: [id], onDelete: SetNull)
-  fromOfficeId    String
-  fromOffice      Office          @relation("TripFromOffice", fields: [fromOfficeId], references: [id])
-  toOfficeId      String
-  toOffice        Office          @relation("TripToOffice", fields: [toOfficeId], references: [id])
+  fromOfficeId    String?
+  fromOffice      Office?         @relation("TripFromOffice", fields: [fromOfficeId], references: [id])
+  toOfficeId      String?
+  toOffice        Office?         @relation("TripToOffice", fields: [toOfficeId], references: [id])
+  pickupAddress   String?         // Custom pickup location (free text)
+  dropoffAddress  String?         // Custom dropoff location (free text)
   purpose         String
   tripType        TripType        @default(ONE_WAY)
   status          TripStatus      @default(PENDING)
@@ -199,12 +202,16 @@ model Trip {
 }
 
 model TripPassenger {
-  id     String @id @default(cuid())
-  tripId String
-  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  userId String?
-  name   String
-  email  String?
+  id          String  @id @default(cuid())
+  tripId      String
+  trip        Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId      String?         // linked employee if found in system
+  user        User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  employeeId  String?         // employee ID e.g. EMP-104
+  name        String
+  email       String?
+  department  String?
+  phone       String?
 }
 
 model TrackingPoint {

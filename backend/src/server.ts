@@ -19,6 +19,8 @@ import trackingRoutes from './modules/tracking/tracking.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import chatRoutes from './modules/chat/chat.routes';
 import { setChatIo } from './modules/chat/chat.controller';
+import notificationRoutes from './modules/notifications/notifications.routes';
+import { setNotificationIo } from './modules/notifications/notifications.controller';
 
 const app = express();
 const server = http.createServer(app);
@@ -34,6 +36,7 @@ const io = new SocketIOServer(server, {
 initializeSockets(io);
 setTrackingIo(io);
 setChatIo(io);
+setNotificationIo(io);
 
 import path from 'path';
 
@@ -63,6 +66,7 @@ app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/tracking', trackingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error Handler Middleware
 app.use(errorHandler);

@@ -31,8 +31,8 @@ export async function apiRequest<T = any>(
 
 export const api = {
   // Auth
-  login: (email: string, password: string) =>
-    apiRequest('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  login: (identifier: string, password: string) =>
+    apiRequest('/auth/login', { method: 'POST', body: JSON.stringify({ identifier, password }) }),
   getMe: () => apiRequest('/auth/me'),
 
   // Dashboard
@@ -132,5 +132,24 @@ export const api = {
       return { success: false, message: e.message || 'File upload failed' };
     }
   },
+
+  // Notifications
+  sendNotification: (payload: { title: string; body: string; target: string; tripId?: string; userId?: string; employeeId?: string }) =>
+    apiRequest('/notifications/send', { method: 'POST', body: JSON.stringify(payload) }),
+
+  // User Management (Employees & Drivers)
+  getUsers: (params: string = '') => apiRequest(`/auth/users${params}`),
+  createUser: (payload: {
+    name: string;
+    email: string;
+    password?: string;
+    role: 'EMPLOYEE' | 'DRIVER';
+    department?: string;
+    employeeId?: string;
+    phone?: string;
+    licenseNumber?: string;
+    licenseExpiry?: string;
+  }) => apiRequest('/auth/users', { method: 'POST', body: JSON.stringify(payload) }),
+  deleteUser: (id: string) => apiRequest(`/auth/users/${id}`, { method: 'DELETE' }),
 };
 

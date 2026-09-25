@@ -82,10 +82,10 @@ const startTripSimulation = async (req, res) => {
             activeSimulations.delete(tripId);
         }
         // Origin and Destination Coordinates (Default to Dhaka HQ -> Gazipur Factory if null)
-        const startLat = trip.fromOffice.latitude || 23.8103;
-        const startLng = trip.fromOffice.longitude || 90.4125;
-        const endLat = trip.toOffice.latitude || 24.0023;
-        const endLng = trip.toOffice.longitude || 90.4244;
+        const startLat = trip.fromOffice?.latitude ?? 23.8103;
+        const startLng = trip.fromOffice?.longitude ?? 90.4125;
+        const endLat = trip.toOffice?.latitude ?? 24.0023;
+        const endLng = trip.toOffice?.longitude ?? 90.4244;
         const totalSteps = 25;
         let currentStep = 0;
         // Mark trip as IN_PROGRESS if not already

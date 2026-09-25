@@ -1,24 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancelTrip = exports.completeTrip = exports.startTrip = exports.rejectTrip = exports.approveAndAssignTrip = exports.getTripById = exports.getTrips = exports.createTrip = void 0;
+exports.cancelTrip = exports.completeTrip = exports.startTrip = exports.rejectTrip = exports.approveAndAssignTrip = exports.getTripById = exports.getMyTrips = exports.getTrips = exports.createTrip = void 0;
 const db_1 = require("../../config/db");
+const notifications_controller_1 = require("../notifications/notifications.controller");
 const createTrip = async (req, res) => {
     try {
-        const { fromOfficeId, toOfficeId, departureAt, returnAt, purpose, tripType = 'ONE_WAY', passengers = [], } = req.body;
+        const { fromOfficeId, toOfficeId, pickupAddress, dropoffAddress, departureAt, returnAt, purpose, tripType = 'ONE_WAY', passengers = [], } = req.body;
         const requesterId = req.user?.userId;
         if (!requesterId)
             return res.status(401).json({ success: false, message: 'Unauthenticated' });
-        if (!fromOfficeId || !toOfficeId || !departureAt || !purpose) {
+        // Must have either office or custom address for both pickup and dropoff
+        const hasPickup = fromOfficeId || pickupAddress;
+        const hasDropoff = toOfficeId || dropoffAddress;
+        if (!hasPickup || !hasDropoff || !departureAt || !purpose) {
             return res.status(400).json({
                 success: false,
-                message: 'From Office, To Office, Departure Date/Time, and Purpose are required',
+                message: 'Pickup location, dropoff location, departure time, and purpose are required',
             });
         }
         const trip = await db_1.prisma.trip.create({
             data: {
                 requesterId,
-                fromOfficeId,
-                toOfficeId,
+                fromOfficeId: fromOfficeId || null,
+                toOfficeId: toOfficeId || null,
+                pickupAddress: pickupAddress || null,
+                dropoffAddress: dropoffAddress || null,
                 departureAt: new Date(departureAt),
                 returnAt: returnAt ? new Date(returnAt) : null,
                 purpose,
@@ -26,8 +32,12 @@ const createTrip = async (req, res) => {
                 status: 'PENDING',
                 passengers: {
                     create: passengers.map((p) => ({
+                        userId: p.userId || null,
+                        employeeId: p.employeeId || null,
                         name: p.name,
                         email: p.email || null,
+                        department: p.department || null,
+                        phone: p.phone || null,
                     })),
                 },
             },
@@ -38,6 +48,35 @@ const createTrip = async (req, res) => {
                 passengers: true,
             },
         });
+        // Notify all active administrators of the new requisition
+        try {
+            const admins = await db_1.prisma.user.findMany({
+                where: { role: 'ADMIN', isActive: true },
+                select: { id: true },
+            });
+            if (admins.length > 0) {
+                const fromName = trip.fromOffice?.name || trip.pickupAddress || 'Origin';
+                const toName = trip.toOffice?.name || trip.dropoffAddress || 'Destination';
+                await db_1.prisma.notification.createMany({
+                    data: admins.map((a) => ({
+                        userId: a.id,
+                        title: 'New Trip Requisition',
+                        body: `${trip.requester.name} requested transit: ${fromName} → ${toName}`,
+                        type: 'TRIP_UPDATE',
+                    })),
+                });
+                (0, notifications_controller_1.emitNotification)({
+                    userIds: admins.map((a) => a.id),
+                    title: 'New Trip Requisition',
+                    body: `${trip.requester.name} requested transit: ${fromName} → ${toName}`,
+                    type: 'TRIP_UPDATE',
+                    data: { tripId: trip.id },
+                });
+            }
+        }
+        catch (notifErr) {
+            console.warn('Failed to dispatch new trip admin notification:', notifErr);
+        }
         return res.status(201).json({ success: true, data: trip });
     }
     catch (error) {
@@ -76,7 +115,7 @@ const getTrips = async (req, res) => {
                 vehicle: true,
                 driver: {
                     include: {
-                        user: { select: { id: true, name: true, phone: true, email: true } },
+                        user: { select: { id: true, name: true, phone: true, email: true, employeeId: true } },
                     },
                 },
                 fromOffice: true,
@@ -94,6 +133,34 @@ const getTrips = async (req, res) => {
     }
 };
 exports.getTrips = getTrips;
+const getMyTrips = async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user)
+            return res.status(401).json({ success: false, message: 'Unauthenticated' });
+        const where = user.role === 'DRIVER'
+            ? { driverId: user.driverId }
+            : { requesterId: user.userId };
+        const trips = await db_1.prisma.trip.findMany({
+            where,
+            include: {
+                vehicle: { select: { id: true, registrationNo: true, make: true, model: true, type: true } },
+                driver: {
+                    include: { user: { select: { id: true, name: true, phone: true, employeeId: true } } },
+                },
+                fromOffice: { select: { id: true, name: true, address: true } },
+                toOffice: { select: { id: true, name: true, address: true } },
+                passengers: true,
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+        return res.json({ success: true, data: trips });
+    }
+    catch (error) {
+        return res.status(500).json({ success: false, message: 'Failed to fetch your trips' });
+    }
+};
+exports.getMyTrips = getMyTrips;
 const getTripById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -104,7 +171,7 @@ const getTripById = async (req, res) => {
                 vehicle: true,
                 driver: {
                     include: {
-                        user: { select: { id: true, name: true, phone: true, email: true } },
+                        user: { select: { id: true, name: true, phone: true, email: true, employeeId: true } },
                     },
                 },
                 fromOffice: true,
@@ -166,18 +233,21 @@ const approveAndAssignTrip = async (req, res) => {
                     fromOffice: true,
                     toOffice: true,
                     requester: true,
+                    passengers: true,
                 },
             });
             // Update vehicle & driver status
             await tx.vehicle.update({ where: { id: vehicleId }, data: { status: 'IN_USE' } });
             await tx.driver.update({ where: { id: driverId }, data: { status: 'ON_TRIP' } });
+            const fromName = updatedTrip.fromOffice?.name || updatedTrip.pickupAddress || 'Origin';
+            const toName = updatedTrip.toOffice?.name || updatedTrip.dropoffAddress || 'Destination';
             // Create notification for requester
             await tx.notification.create({
                 data: {
                     userId: updatedTrip.requesterId,
                     title: 'Trip Approved & Assigned',
-                    body: `Your trip from ${updatedTrip.fromOffice.name} to ${updatedTrip.toOffice.name} is approved. Driver: ${driver.user.name}, Vehicle: ${vehicle.model} (${vehicle.registrationNo}).`,
-                    type: 'TRIP_UPDATE',
+                    body: `Your trip from ${fromName} to ${toName} is approved. Driver: ${driver.user.name}, Vehicle: ${vehicle.model} (${vehicle.registrationNo}).`,
+                    type: 'TRIP_APPROVED',
                 },
             });
             // Create notification for driver
@@ -185,22 +255,38 @@ const approveAndAssignTrip = async (req, res) => {
                 data: {
                     userId: driver.userId,
                     title: 'New Trip Assigned',
-                    body: `You have been assigned to trip to ${updatedTrip.toOffice.name} departing on ${new Date(updatedTrip.departureAt).toLocaleDateString()}.`,
-                    type: 'TRIP_UPDATE',
+                    body: `You have been assigned to trip to ${toName} departing on ${new Date(updatedTrip.departureAt).toLocaleDateString()}.`,
+                    type: 'TRIP_ASSIGNED',
                 },
             });
             // Automatically create a Trip-scoped real-time Chat Thread
             const adminUserId = req.user?.userId || updatedTrip.requesterId;
             const participantUserIds = Array.from(new Set([updatedTrip.requesterId, driver.userId, adminUserId]));
+            // Notify accompanying colleagues and include in chat thread
+            if (updatedTrip.passengers && updatedTrip.passengers.length > 0) {
+                for (const p of updatedTrip.passengers) {
+                    if (p.userId) {
+                        participantUserIds.push(p.userId);
+                        await tx.notification.create({
+                            data: {
+                                userId: p.userId,
+                                title: 'Assigned to Trip',
+                                body: `You are scheduled as an accompanying colleague on trip to ${toName}. Driver: ${driver.user.name}, Vehicle: ${vehicle.model} (${vehicle.registrationNo}).`,
+                                type: 'TRIP_ASSIGNED',
+                            },
+                        });
+                    }
+                }
+            }
             await tx.conversation.upsert({
                 where: { tripId: updatedTrip.id },
                 update: {},
                 create: {
                     tripId: updatedTrip.id,
-                    subject: `Trip: ${updatedTrip.fromOffice.name} → ${updatedTrip.toOffice.name}`,
+                    subject: `Trip: ${fromName} → ${toName}`,
                     type: 'TRIP_THREAD',
                     participants: {
-                        create: participantUserIds.map((uId) => ({
+                        create: Array.from(new Set(participantUserIds)).map((uId) => ({
                             userId: uId,
                             lastReadAt: uId === adminUserId ? new Date() : null,
                         })),
@@ -217,6 +303,40 @@ const approveAndAssignTrip = async (req, res) => {
             });
             return updatedTrip;
         });
+        // Real-time socket broadcast for all assigned parties
+        try {
+            (0, notifications_controller_1.emitNotification)({
+                userIds: [result.requesterId],
+                title: 'Trip Approved & Assigned',
+                body: `Your trip to ${result.toOffice?.name || result.dropoffAddress || 'Destination'} is approved.`,
+                type: 'TRIP_APPROVED',
+                data: { tripId: result.id },
+            });
+            if (result.driver?.userId) {
+                (0, notifications_controller_1.emitNotification)({
+                    userIds: [result.driver.userId],
+                    title: 'New Trip Assigned',
+                    body: `You have been assigned to trip to ${result.toOffice?.name || result.dropoffAddress || 'Destination'}.`,
+                    type: 'TRIP_ASSIGNED',
+                    data: { tripId: result.id },
+                });
+            }
+            if (result.passengers && result.passengers.length > 0) {
+                const passengerUserIds = result.passengers.map((p) => p.userId).filter(Boolean);
+                if (passengerUserIds.length > 0) {
+                    (0, notifications_controller_1.emitNotification)({
+                        userIds: passengerUserIds,
+                        title: 'Assigned to Trip',
+                        body: `You are scheduled on trip to ${result.toOffice?.name || result.dropoffAddress || 'Destination'}.`,
+                        type: 'TRIP_ASSIGNED',
+                        data: { tripId: result.id },
+                    });
+                }
+            }
+        }
+        catch (notifErr) {
+            console.warn('Socket notification error on trip approval:', notifErr);
+        }
         return res.json({ success: true, message: 'Trip approved and assigned successfully', data: result });
     }
     catch (error) {
@@ -229,6 +349,10 @@ const rejectTrip = async (req, res) => {
     try {
         const { id } = req.params;
         const { rejectionReason } = req.body;
+        const existingTrip = await db_1.prisma.trip.findUniqueOrThrow({
+            where: { id },
+            include: { fromOffice: true, toOffice: true, passengers: true },
+        });
         const trip = await db_1.prisma.trip.update({
             where: { id },
             data: {
@@ -236,14 +360,41 @@ const rejectTrip = async (req, res) => {
                 rejectionReason: rejectionReason || 'Request could not be accommodated at this time.',
             },
         });
+        const toLoc = existingTrip.toOffice?.name || existingTrip.dropoffAddress || 'Destination';
         await db_1.prisma.notification.create({
             data: {
                 userId: trip.requesterId,
                 title: 'Trip Request Rejected',
-                body: `Your trip request was rejected: ${trip.rejectionReason}`,
-                type: 'TRIP_UPDATE',
+                body: `Your trip request to ${toLoc} was rejected: ${trip.rejectionReason}`,
+                type: 'TRIP_REJECTED',
             },
         });
+        // Notify accompanying colleagues if registered users
+        for (const p of existingTrip.passengers) {
+            if (p.userId) {
+                await db_1.prisma.notification.create({
+                    data: {
+                        userId: p.userId,
+                        title: 'Trip Request Rejected',
+                        body: `Trip to ${toLoc} you were accompanying was rejected: ${trip.rejectionReason}`,
+                        type: 'TRIP_REJECTED',
+                    },
+                });
+            }
+        }
+        try {
+            const recipientIds = [trip.requesterId, ...existingTrip.passengers.map((p) => p.userId).filter(Boolean)];
+            (0, notifications_controller_1.emitNotification)({
+                userIds: recipientIds,
+                title: 'Trip Request Rejected',
+                body: `Your trip request to ${toLoc} was rejected: ${trip.rejectionReason}`,
+                type: 'TRIP_REJECTED',
+                data: { tripId: trip.id },
+            });
+        }
+        catch (notifErr) {
+            console.warn('Socket notification error on trip rejection:', notifErr);
+        }
         return res.json({ success: true, message: 'Trip rejected', data: trip });
     }
     catch (error) {
@@ -257,7 +408,13 @@ const startTrip = async (req, res) => {
         const { startOdometer } = req.body;
         const existingTrip = await db_1.prisma.trip.findUniqueOrThrow({
             where: { id },
-            include: { vehicle: true },
+            include: {
+                vehicle: true,
+                driver: { include: { user: true } },
+                fromOffice: true,
+                toOffice: true,
+                passengers: true,
+            },
         });
         const odo = startOdometer !== undefined ? parseFloat(startOdometer) : existingTrip.vehicle?.odometer || 0;
         const trip = await db_1.prisma.trip.update({
@@ -270,8 +427,48 @@ const startTrip = async (req, res) => {
             include: {
                 vehicle: true,
                 driver: { include: { user: true } },
+                fromOffice: true,
+                toOffice: true,
+                passengers: true,
             },
         });
+        const fromLoc = trip.fromOffice?.name || trip.pickupAddress || 'Origin';
+        const toLoc = trip.toOffice?.name || trip.dropoffAddress || 'Destination';
+        // Notify requester
+        await db_1.prisma.notification.create({
+            data: {
+                userId: trip.requesterId,
+                title: 'Trip Started 🚀',
+                body: `Driver ${trip.driver?.user?.name || 'Assigned Driver'} has commenced your trip: ${fromLoc} → ${toLoc}.`,
+                type: 'TRIP_STARTED',
+            },
+        });
+        // Notify accompanying colleagues
+        for (const p of trip.passengers) {
+            if (p.userId) {
+                await db_1.prisma.notification.create({
+                    data: {
+                        userId: p.userId,
+                        title: 'Trip Started 🚀',
+                        body: `Trip ${fromLoc} → ${toLoc} has commenced.`,
+                        type: 'TRIP_STARTED',
+                    },
+                });
+            }
+        }
+        try {
+            const recipientIds = [trip.requesterId, ...trip.passengers.map((p) => p.userId).filter(Boolean)];
+            (0, notifications_controller_1.emitNotification)({
+                userIds: recipientIds,
+                title: 'Trip Started 🚀',
+                body: `Driver ${trip.driver?.user?.name || 'Assigned Driver'} has commenced your trip: ${fromLoc} → ${toLoc}.`,
+                type: 'TRIP_STARTED',
+                data: { tripId: trip.id },
+            });
+        }
+        catch (notifErr) {
+            console.warn('Socket notification error on trip start:', notifErr);
+        }
         return res.json({ success: true, message: 'Trip journey started', data: trip });
     }
     catch (error) {
@@ -285,11 +482,18 @@ const completeTrip = async (req, res) => {
         const { endOdometer } = req.body;
         const existingTrip = await db_1.prisma.trip.findUniqueOrThrow({
             where: { id },
-            include: { vehicle: true },
+            include: {
+                vehicle: true,
+                driver: { include: { user: true } },
+                fromOffice: true,
+                toOffice: true,
+                passengers: true,
+            },
         });
         const finalOdometer = parseFloat(endOdometer);
         const startOdo = existingTrip.startOdometer || existingTrip.vehicle?.odometer || finalOdometer;
         const distanceCovered = Math.max(0, Math.round((finalOdometer - startOdo) * 10) / 10);
+        const toLoc = existingTrip.toOffice?.name || existingTrip.dropoffAddress || 'Destination';
         const result = await db_1.prisma.$transaction(async (tx) => {
             const updatedTrip = await tx.trip.update({
                 where: { id },
@@ -317,8 +521,57 @@ const completeTrip = async (req, res) => {
                     data: { status: 'AVAILABLE' },
                 });
             }
+            const toLoc = existingTrip.toOffice?.name || existingTrip.dropoffAddress || 'Destination';
+            // Notify requester
+            await tx.notification.create({
+                data: {
+                    userId: existingTrip.requesterId,
+                    title: 'Trip Completed 🏁',
+                    body: `Your trip to ${toLoc} has arrived and concluded. Distance covered: ${distanceCovered} km.`,
+                    type: 'TRIP_COMPLETED',
+                },
+            });
+            // Notify driver
+            if (existingTrip.driver?.userId) {
+                await tx.notification.create({
+                    data: {
+                        userId: existingTrip.driver.userId,
+                        title: 'Trip Completed 🏁',
+                        body: `Trip to ${toLoc} completed successfully. Distance: ${distanceCovered} km. You are now Available.`,
+                        type: 'TRIP_COMPLETED',
+                    },
+                });
+            }
+            // Notify accompanying colleagues
+            for (const p of existingTrip.passengers) {
+                if (p.userId) {
+                    await tx.notification.create({
+                        data: {
+                            userId: p.userId,
+                            title: 'Trip Completed 🏁',
+                            body: `Your trip to ${toLoc} has concluded.`,
+                            type: 'TRIP_COMPLETED',
+                        },
+                    });
+                }
+            }
             return updatedTrip;
         });
+        try {
+            const recipientIds = [existingTrip.requesterId, ...existingTrip.passengers.map((p) => p.userId).filter(Boolean)];
+            if (existingTrip.driver?.userId)
+                recipientIds.push(existingTrip.driver.userId);
+            (0, notifications_controller_1.emitNotification)({
+                userIds: recipientIds,
+                title: 'Trip Completed 🏁',
+                body: `Your trip to ${toLoc} has arrived and concluded. Distance covered: ${distanceCovered} km.`,
+                type: 'TRIP_COMPLETED',
+                data: { tripId: result.id },
+            });
+        }
+        catch (notifErr) {
+            console.warn('Socket notification error on trip completion:', notifErr);
+        }
         return res.json({ success: true, message: 'Trip completed successfully', data: result });
     }
     catch (error) {

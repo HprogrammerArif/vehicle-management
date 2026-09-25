@@ -58,7 +58,7 @@ export const AssignTripModal: React.FC<AssignTripModalProps> = ({ trip, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
@@ -91,12 +91,13 @@ export const AssignTripModal: React.FC<AssignTripModalProps> = ({ trip, onClose,
           <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-400">Requester:</span>
-              <span className="font-bold text-white">{trip.requester?.name}</span>
+              <span className="font-bold text-white">{trip.requester?.name || 'Staff'}</span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-400">Route:</span>
               <span className="font-medium text-slate-200">
-                {trip.fromOffice.name} &rarr; {trip.toOffice.name}
+                {trip.fromOffice?.name || trip.pickupAddress || 'Origin'} &rarr;{' '}
+                {trip.toOffice?.name || trip.dropoffAddress || 'Destination'}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
@@ -146,7 +147,7 @@ export const AssignTripModal: React.FC<AssignTripModalProps> = ({ trip, onClose,
               >
                 {drivers.map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.user.name} — Lic: {d.licenseNumber}
+                    {d.user?.name || 'Driver'} — Lic: {d.licenseNumber}
                   </option>
                 ))}
               </select>

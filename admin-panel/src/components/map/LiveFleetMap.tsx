@@ -96,7 +96,7 @@ export const LiveFleetMap: React.FC<LiveFleetMapProps> = ({ height = '550px', se
   const activeVehicles = Object.values(liveFleet);
 
   return (
-    <div className="relative w-full rounded-xl overflow-hidden border border-slate-800 shadow-2xl" style={{ height }}>
+    <div className="relative isolate z-0 w-full rounded-xl overflow-hidden border border-slate-800 shadow-2xl" style={{ height }}>
       {/* Map Legend Overlay */}
       <div className="absolute top-4 right-4 z-[1000] glass-panel px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-4 text-xs font-semibold">
         <div className="flex items-center gap-2">

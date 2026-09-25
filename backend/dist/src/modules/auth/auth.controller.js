@@ -3,18 +3,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateFcmToken = exports.getMe = exports.register = exports.login = void 0;
+exports.deleteUser = exports.listUsers = exports.createUser = exports.lookupEmployee = exports.updateFcmToken = exports.getMe = exports.register = exports.login = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const db_1 = require("../../config/db");
 const jwt_1 = require("../../utils/jwt");
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ success: false, message: 'Email and password are required' });
+        const { identifier, email, password } = req.body;
+        const loginId = identifier || email; // support both field names
+        if (!loginId || !password) {
+            return res.status(400).json({ success: false, message: 'Identifier and password are required' });
         }
-        const user = await db_1.prisma.user.findUnique({
-            where: { email },
+        // Try finding by employeeId first, then fall back to email
+        let user = await db_1.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { employeeId: loginId },
+                    { email: loginId },
+                ],
+            },
             include: {
                 driverProfile: true,
                 organization: true,
@@ -173,3 +180,195 @@ const updateFcmToken = async (req, res) => {
     }
 };
 exports.updateFcmToken = updateFcmToken;
+// GET /auth/lookup-employee?employeeId=EMP-104
+// Returns public employee info — used for passenger search in trip request
+const lookupEmployee = async (req, res) => {
+    try {
+        const { employeeId } = req.query;
+        if (!employeeId || typeof employeeId !== 'string') {
+            return res.status(400).json({ success: false, message: 'employeeId query param required' });
+        }
+        const user = await db_1.prisma.user.findFirst({
+            where: {
+                employeeId: employeeId.toUpperCase(),
+                role: 'EMPLOYEE',
+                isActive: true,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                employeeId: true,
+                department: true,
+                phone: true,
+            },
+        });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'No employee found with that ID' });
+        }
+        return res.json({ success: true, data: user });
+    }
+    catch (error) {
+        return res.status(500).json({ success: false, message: 'Lookup failed' });
+    }
+};
+exports.lookupEmployee = lookupEmployee;
+// POST /auth/users — Admin creates an employee or driver with credentials
+const createUser = async (req, res) => {
+    try {
+        const { name, email, password = 'password123', role = 'EMPLOYEE', department, employeeId, phone, licenseNumber, licenseExpiry, } = req.body;
+        if (!name || !email) {
+            return res.status(400).json({ success: false, message: 'Name and email are required' });
+        }
+        const existingEmail = await db_1.prisma.user.findUnique({ where: { email } });
+        if (existingEmail) {
+            return res.status(400).json({ success: false, message: 'A user with this email already exists' });
+        }
+        // Auto-generate employeeId if not provided
+        let finalEmployeeId = employeeId ? employeeId.trim().toUpperCase() : null;
+        if (!finalEmployeeId) {
+            if (role === 'DRIVER') {
+                const driverCount = await db_1.prisma.driver.count();
+                finalEmployeeId = `DRV-${String(driverCount + 1).padStart(3, '0')}`;
+            }
+            else {
+                const empCount = await db_1.prisma.user.count({ where: { role: 'EMPLOYEE' } });
+                finalEmployeeId = `EMP-${100 + empCount + 1}`;
+            }
+        }
+        else {
+            const existingId = await db_1.prisma.user.findFirst({ where: { employeeId: finalEmployeeId } });
+            if (existingId) {
+                return res.status(400).json({ success: false, message: `Employee ID ${finalEmployeeId} already assigned` });
+            }
+        }
+        // Organization fallback
+        let org = await db_1.prisma.organization.findFirst();
+        if (!org) {
+            org = await db_1.prisma.organization.create({
+                data: { name: 'AppTriangle Corporate Fleet' },
+            });
+        }
+        const passwordHash = await bcryptjs_1.default.hash(password, 10);
+        const user = await db_1.prisma.user.create({
+            data: {
+                name,
+                email,
+                phone: phone || null,
+                passwordHash,
+                role: role,
+                department: department || (role === 'DRIVER' ? 'Logistics / Fleet' : 'General'),
+                employeeId: finalEmployeeId,
+                organizationId: org.id,
+                driverProfile: role === 'DRIVER'
+                    ? {
+                        create: {
+                            licenseNumber: licenseNumber || `LIC-${Math.floor(100000 + Math.random() * 900000)}`,
+                            licenseExpiry: licenseExpiry
+                                ? new Date(licenseExpiry)
+                                : new Date(Date.now() + 365 * 24 * 3600 * 1000 * 3), // 3 years default
+                        },
+                    }
+                    : undefined,
+            },
+            include: {
+                driverProfile: true,
+                organization: true,
+            },
+        });
+        return res.status(201).json({
+            success: true,
+            message: `${role} account created successfully`,
+            data: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                employeeId: user.employeeId,
+                role: user.role,
+                department: user.department,
+                phone: user.phone,
+                driverId: user.driverProfile?.id,
+                driverStatus: user.driverProfile?.status,
+                licenseNumber: user.driverProfile?.licenseNumber,
+            },
+        });
+    }
+    catch (error) {
+        console.error('Create user error:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Failed to create user' });
+    }
+};
+exports.createUser = createUser;
+// GET /auth/users — Admin lists users (filterable by role, search)
+const listUsers = async (req, res) => {
+    try {
+        const { role, search } = req.query;
+        const where = { isActive: true };
+        if (role && (role === 'EMPLOYEE' || role === 'DRIVER' || role === 'ADMIN')) {
+            where.role = role;
+        }
+        if (search && typeof search === 'string') {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+                { employeeId: { contains: search, mode: 'insensitive' } },
+                { department: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+        const users = await db_1.prisma.user.findMany({
+            where,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                role: true,
+                employeeId: true,
+                department: true,
+                createdAt: true,
+                driverProfile: {
+                    select: {
+                        id: true,
+                        licenseNumber: true,
+                        licenseExpiry: true,
+                        status: true,
+                    },
+                },
+                _count: {
+                    select: {
+                        tripRequests: true,
+                        sentMessages: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+        return res.json({ success: true, data: users });
+    }
+    catch (error) {
+        return res.status(500).json({ success: false, message: 'Failed to list users' });
+    }
+};
+exports.listUsers = listUsers;
+// DELETE /auth/users/:id — Admin soft-deletes or deactivates a user
+const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await db_1.prisma.user.findUnique({ where: { id } });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        if (user.role === 'ADMIN') {
+            return res.status(400).json({ success: false, message: 'Admin accounts cannot be deactivated via this endpoint' });
+        }
+        await db_1.prisma.user.update({
+            where: { id },
+            data: { isActive: false },
+        });
+        return res.json({ success: true, message: 'User deactivated successfully' });
+    }
+    catch (error) {
+        return res.status(500).json({ success: false, message: 'Failed to deactivate user' });
+    }
+};
+exports.deleteUser = deleteUser;

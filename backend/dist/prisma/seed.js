@@ -115,10 +115,11 @@ async function main() {
     // 4. Drivers
     const driver1User = await prisma.user.upsert({
         where: { email: 'driver.rahim@vms.com' },
-        update: {},
+        update: { employeeId: 'DRV-201' },
         create: {
             name: 'Mohammad Rahim',
             email: 'driver.rahim@vms.com',
+            employeeId: 'DRV-201',
             passwordHash: driverPassword,
             role: 'DRIVER',
             phone: '+880 1614 777888',
@@ -139,10 +140,11 @@ async function main() {
     });
     const driver2User = await prisma.user.upsert({
         where: { email: 'driver.karim@vms.com' },
-        update: {},
+        update: { employeeId: 'DRV-202' },
         create: {
             name: 'Abdul Karim',
             email: 'driver.karim@vms.com',
+            employeeId: 'DRV-202',
             passwordHash: driverPassword,
             role: 'DRIVER',
             phone: '+880 1715 333444',
@@ -163,10 +165,11 @@ async function main() {
     });
     const driver3User = await prisma.user.upsert({
         where: { email: 'driver.alam@vms.com' },
-        update: {},
+        update: { employeeId: 'DRV-203' },
         create: {
             name: 'Alamgir Hossain',
             email: 'driver.alam@vms.com',
+            employeeId: 'DRV-203',
             passwordHash: driverPassword,
             role: 'DRIVER',
             phone: '+880 1516 111222',

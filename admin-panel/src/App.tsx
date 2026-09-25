@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from './store/useStore';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -9,57 +9,58 @@ import { FleetPage } from './pages/FleetPage';
 import { DriversPage } from './pages/DriversPage';
 import { FuelPage } from './pages/FuelPage';
 import { MaintenancePage } from './pages/MaintenancePage';
+import { EmployeesPage } from './pages/EmployeesPage';
 import { EmployeePortal } from './pages/EmployeePortal';
 import { DriverPortal } from './pages/DriverPortal';
 import { ChatPage } from './pages/ChatPage';
+import { LoginPage } from './pages/LoginPage';
 import { getSocket } from './lib/socket';
 import { api } from './lib/api';
 
 export const App: React.FC = () => {
-  const { activeTab, setUnreadChatCount, setUser } = useStore();
+  const { activeTab, setUnreadChatCount, setUser, setIsAuthenticated, isAuthenticated, user } = useStore();
+  const [bootstrapping, setBootstrapping] = useState(true);
 
   useEffect(() => {
-    // Auto-login admin for demo purposes — gets the real DB user ID
-    const autoLogin = async () => {
-      try {
-        // Check if already have a token
-        const existingToken = localStorage.getItem('vms_token');
-        if (existingToken) {
-          // Verify token is still valid by fetching profile
-          const meRes = await api.getMe?.();
-          if (meRes?.success && meRes.user) {
-            setUser(meRes.user);
-            return;
-          }
-        }
+    const bootstrap = async () => {
+      const token = localStorage.getItem('vms_token');
+      if (!token) {
+        setBootstrapping(false);
+        return;
+      }
 
-        // Login with demo admin credentials
-        const res = await api.login?.('admin@vms.com', 'admin123');
-        if (res?.success && res.token && res.user) {
-          localStorage.setItem('vms_token', res.token);
-          setUser(res.user);
-          console.log('✅ Auto-logged in as:', res.user.name, '(ID:', res.user.id, ')');
+      try {
+        const meRes = await api.getMe?.();
+        if (meRes?.success && meRes.user) {
+          setUser(meRes.user);
+          setIsAuthenticated(true);
+        } else {
+          // Token invalid/expired — clear it
+          localStorage.removeItem('vms_token');
         }
-      } catch (e) {
-        console.warn('Auto-login failed, using fallback user:', e);
+      } catch {
+        localStorage.removeItem('vms_token');
+      } finally {
+        setBootstrapping(false);
       }
     };
 
-    autoLogin();
+    bootstrap();
+  }, [setUser, setIsAuthenticated]);
 
-    // Initialize Socket.io connection
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
     const socket = getSocket();
 
-    // Fetch initial unread count
     api.getUnreadChatCount()
       .then((res: any) => {
-        if (res && res.success && typeof res.count === 'number') {
+        if (res?.success && typeof res.count === 'number') {
           setUnreadChatCount(res.count);
         }
       })
       .catch(() => {});
 
-    // Listen for global unread updates
     const handleUnreadUpdate = (data: { count?: number }) => {
       if (data && typeof data.count === 'number') {
         setUnreadChatCount(data.count);
@@ -67,37 +68,77 @@ export const App: React.FC = () => {
     };
 
     socket.on('chat:unread_update', handleUnreadUpdate);
-
     return () => {
       socket.off('chat:unread_update', handleUnreadUpdate);
     };
-  }, [setUnreadChatCount, setUser]);
+  }, [isAuthenticated, setUnreadChatCount]);
 
+  // ─────────────────────────────────────────
+  // Bootstrapping spinner
+  // ─────────────────────────────────────────
+  if (bootstrapping) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+          <p className="text-slate-400 text-sm font-medium">Loading VMS Platform…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────
+  // Not authenticated → Login page
+  // ─────────────────────────────────────────
+  if (!isAuthenticated || !user) {
+    return <LoginPage />;
+  }
+
+  // ─────────────────────────────────────────
+  // Role-based content renderer
+  // ─────────────────────────────────────────
   const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'tracking':
-        return <LiveTrackingPage />;
-      case 'trips':
-        return <TripsPage />;
-      case 'chat':
-        return <ChatPage />;
-      case 'fleet':
-        return <FleetPage />;
-      case 'drivers':
-        return <DriversPage />;
-      case 'fuel':
-        return <FuelPage />;
-      case 'maintenance':
-        return <MaintenancePage />;
-      case 'employee-portal':
-        return <EmployeePortal />;
-      case 'driver-portal':
-        return <DriverPortal />;
-      default:
-        return <Dashboard />;
+    const role = user.role;
+
+    // ── ADMIN has access to everything
+    if (role === 'ADMIN') {
+      switch (activeTab) {
+        case 'dashboard':      return <Dashboard />;
+        case 'tracking':       return <LiveTrackingPage />;
+        case 'trips':          return <TripsPage />;
+        case 'chat':           return <ChatPage />;
+        case 'fleet':          return <FleetPage />;
+        case 'drivers':        return <DriversPage />;
+        case 'employees':      return <EmployeesPage />;
+        case 'fuel':           return <FuelPage />;
+        case 'maintenance':    return <MaintenancePage />;
+        case 'employee-portal': return <EmployeePortal />;
+        case 'driver-portal':  return <DriverPortal />;
+        default:               return <Dashboard />;
+      }
     }
+
+    // ── EMPLOYEE can only access employee-facing pages
+    if (role === 'EMPLOYEE') {
+      switch (activeTab) {
+        case 'employee-portal': return <EmployeePortal />;
+        case 'trips':           return <TripsPage />;
+        case 'chat':            return <ChatPage />;
+        default:                return <EmployeePortal />;
+      }
+    }
+
+    // ── DRIVER can only access driver-facing pages
+    if (role === 'DRIVER') {
+      switch (activeTab) {
+        case 'driver-portal': return <DriverPortal />;
+        case 'fuel':          return <FuelPage />;
+        case 'chat':          return <ChatPage />;
+        default:              return <DriverPortal />;
+      }
+    }
+
+    return <Dashboard />;
   };
 
   return (

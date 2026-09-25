@@ -2,9 +2,40 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initializeSockets = initializeSockets;
 const db_1 = require("../config/db");
+// In-memory presence map: socketId -> OnlineUser
+const activeSockets = new Map();
+// Rate limiting map: socketId -> array of message timestamps
+const messageRateMap = new Map();
+function getOnlineUserIds() {
+    const ids = new Set();
+    for (const u of activeSockets.values()) {
+        ids.add(u.userId);
+    }
+    return Array.from(ids);
+}
 function initializeSockets(io) {
     io.on('connection', (socket) => {
         console.log(`[WebSocket] Client connected: ${socket.id}`);
+        // Broadcast current online user list to newly connected socket
+        socket.emit('presence:sync', { onlineUserIds: getOnlineUserIds() });
+        // Client registers their active identity
+        socket.on('user:online', (data) => {
+            if (!data?.userId)
+                return;
+            activeSockets.set(socket.id, {
+                socketId: socket.id,
+                userId: data.userId,
+                name: data.name || 'User',
+                role: data.role || 'EMPLOYEE',
+                lastSeen: new Date(),
+            });
+            console.log(`[WebSocket] User online: ${data.name} (${data.userId})`);
+            io.emit('presence:sync', { onlineUserIds: getOnlineUserIds() });
+        });
+        // Request presence update on demand
+        socket.on('presence:get', () => {
+            socket.emit('presence:sync', { onlineUserIds: getOnlineUserIds() });
+        });
         // Join Admin Fleet Room
         socket.on('join:admin', () => {
             socket.join('admin_fleet');
@@ -84,19 +115,30 @@ function initializeSockets(io) {
                 console.log(`[WebSocket] Socket ${socket.id} left chat_${conversationId}`);
             }
         });
-        // Send a real-time message
+        // Send a real-time message with size validation & rate-limiting protection
         socket.on('chat:send', async (data) => {
             try {
                 const { conversationId, senderId, body, messageType = 'TEXT', attachmentUrl } = data;
                 if (!conversationId || !senderId || !body || body.trim() === '') {
                     return;
                 }
+                // Safeguard: Max 5000 chars per message
+                const trimmedBody = body.trim().slice(0, 5000);
+                // Safeguard: Rate limit to 10 messages per 5 seconds
+                const now = Date.now();
+                const timestamps = (messageRateMap.get(socket.id) || []).filter((t) => now - t < 5000);
+                if (timestamps.length >= 10) {
+                    socket.emit('chat:error', { message: 'Too many messages sent. Please slow down.' });
+                    return;
+                }
+                timestamps.push(now);
+                messageRateMap.set(socket.id, timestamps);
                 // 1. Persist message in database
                 const message = await db_1.prisma.chatMessage.create({
                     data: {
                         conversationId,
                         senderId,
-                        body: body.trim(),
+                        body: trimmedBody,
                         messageType: messageType || 'TEXT',
                         attachmentUrl: attachmentUrl || null,
                     },
@@ -126,11 +168,12 @@ function initializeSockets(io) {
             }
             catch (error) {
                 console.error('[WebSocket] Error handling chat:send:', error);
+                socket.emit('chat:error', { message: 'Failed to send message' });
             }
         });
         // Typing indicator
         socket.on('chat:typing', (data) => {
-            if (data.conversationId) {
+            if (data?.conversationId) {
                 socket.to(`chat_${data.conversationId}`).emit('chat:typing_indicator', {
                     conversationId: data.conversationId,
                     userName: data.userName,
@@ -160,6 +203,9 @@ function initializeSockets(io) {
         });
         socket.on('disconnect', () => {
             console.log(`[WebSocket] Client disconnected: ${socket.id}`);
+            activeSockets.delete(socket.id);
+            messageRateMap.delete(socket.id);
+            io.emit('presence:sync', { onlineUserIds: getOnlineUserIds() });
         });
     });
 }

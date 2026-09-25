@@ -4,35 +4,52 @@ import { api } from '../lib/api';
 import { Conversation, ChatMessage } from '../types';
 import { useStore } from '../store/useStore';
 
+// Module-level timer so debounce is stable across renders
+let _unreadDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 export const useChat = (conversationId: string | null) => {
   const { user, setUnreadChatCount } = useStore();
   const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Map<id, ChatMessage> for O(1) dedup instead of O(n) array.some()
+  const [messagesMap, setMessagesMap] = useState<Map<string, ChatMessage>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUser, setTypingUser] = useState<string>('');
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Stable ref so socket callbacks always see current conversationId without re-subscribing
+  const conversationIdRef = useRef<string | null>(null);
+  const lastTypingState = useRef<boolean | null>(null);
 
-  // Refresh global unread count
-  const refreshUnreadCount = useCallback(async () => {
-    try {
-      const res = await api.getUnreadChatCount();
-      if (res.success && typeof res.count === 'number') {
-        setUnreadChatCount(res.count);
+  // Derived sorted array — recomputed only when Map reference changes
+  const messages: ChatMessage[] = Array.from(messagesMap.values()).sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+
+  // Debounced unread refresh — coalesces bursts of socket events into a single API call
+  const refreshUnreadCount = useCallback(() => {
+    if (_unreadDebounceTimer) clearTimeout(_unreadDebounceTimer);
+    _unreadDebounceTimer = setTimeout(async () => {
+      try {
+        const res = await api.getUnreadChatCount();
+        if (res.success && typeof res.count === 'number') {
+          setUnreadChatCount(res.count);
+        }
+      } catch {
+        // silently handle
       }
-    } catch (e) {
-      // silently handle
-    }
+    }, 1000);
   }, [setUnreadChatCount]);
 
-  // Load conversation details and messages
+  // Load conversation + messages
   const loadConversation = useCallback(async (id: string) => {
     setIsLoading(true);
     try {
       const res = await api.getConversationById(id);
       if (res.success && res.data) {
         setConversation(res.data);
-        setMessages(res.data.messages || []);
+        const map = new Map<string, ChatMessage>();
+        (res.data.messages || []).forEach((m: ChatMessage) => map.set(m.id, m));
+        setMessagesMap(map);
       }
     } catch (error) {
       console.error('Failed to load conversation:', error);
@@ -41,82 +58,66 @@ export const useChat = (conversationId: string | null) => {
     }
   }, []);
 
-  // Listen to Socket.io events
+  // Socket listeners
   useEffect(() => {
     const socket = getSocket();
+    conversationIdRef.current = conversationId;
 
     if (conversationId) {
       loadConversation(conversationId);
       socket.emit('chat:join', { conversationId });
-
       if (user?.id) {
         socket.emit('chat:read', { conversationId, userId: user.id });
       }
 
-      // Incoming message listener
+      // Incoming message — O(1) dedup via Map, no full re-render of old messages
       const handleMessage = (msg: ChatMessage) => {
-        if (msg.conversationId === conversationId) {
-          setMessages((prev) => {
-            // Avoid duplicate messages
-            if (prev.some((m) => m.id === msg.id)) return prev;
-            return [...prev, msg];
-          });
-
-          // If message is not from me, mark as read
-          if (user?.id && msg.senderId !== user.id) {
-            socket.emit('chat:read', { conversationId, userId: user.id });
-          }
+        if (msg.conversationId !== conversationIdRef.current) return;
+        setMessagesMap((prev) => {
+          if (prev.has(msg.id)) return prev;
+          const next = new Map(prev);
+          next.set(msg.id, msg);
+          return next;
+        });
+        if (user?.id && msg.senderId !== user.id) {
+          socket.emit('chat:read', { conversationId, userId: user.id });
         }
         refreshUnreadCount();
       };
 
-      // Typing indicator listener
-      const handleTyping = (data: {
-        conversationId: string;
-        userName: string;
-        isTyping: boolean;
-      }) => {
-        if (data.conversationId === conversationId) {
-          if (data.isTyping) {
-            setTypingUser(data.userName);
-            setIsTyping(true);
-
-            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-            typingTimeoutRef.current = setTimeout(() => {
-              setIsTyping(false);
-              setTypingUser('');
-            }, 3000);
-          } else {
+      const handleTyping = (data: { conversationId: string; userName: string; isTyping: boolean }) => {
+        if (data.conversationId !== conversationIdRef.current) return;
+        if (data.isTyping) {
+          setTypingUser(data.userName);
+          setIsTyping(true);
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = setTimeout(() => {
             setIsTyping(false);
             setTypingUser('');
-          }
+          }, 3000);
+        } else {
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+          setIsTyping(false);
+          setTypingUser('');
         }
       };
 
-      // Read receipt listener
-      const handleReadReceipt = (data: {
-        conversationId: string;
-        userId: string;
-        readAt: string;
-      }) => {
-        if (data.conversationId === conversationId) {
-          setConversation((prev) => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              participants: prev.participants.map((p) =>
-                p.userId === data.userId ? { ...p, lastReadAt: data.readAt } : p
-              ),
-            };
-          });
-        }
+      const handleReadReceipt = (data: { conversationId: string; userId: string; readAt: string }) => {
+        if (data.conversationId !== conversationIdRef.current) return;
+        setConversation((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            participants: prev.participants.map((p) =>
+              p.userId === data.userId ? { ...p, lastReadAt: data.readAt } : p
+            ),
+          };
+        });
       };
 
-      // Conversation resolved listener
       const handleResolved = (data: { conversationId: string; isResolved: boolean }) => {
-        if (data.conversationId === conversationId) {
-          setConversation((prev) => (prev ? { ...prev, isResolved: data.isResolved } : null));
-        }
+        if (data.conversationId !== conversationIdRef.current) return;
+        setConversation((prev) => (prev ? { ...prev, isResolved: data.isResolved } : null));
       };
 
       socket.on('chat:message', handleMessage);
@@ -134,59 +135,70 @@ export const useChat = (conversationId: string | null) => {
       };
     } else {
       setConversation(null);
-      setMessages([]);
+      setMessagesMap(new Map());
     }
   }, [conversationId, loadConversation, user?.id, refreshUnreadCount]);
 
-  // General unread badge listener across the entire app
+  // Global unread badge listener (independent of active conversation)
   useEffect(() => {
     const socket = getSocket();
     refreshUnreadCount();
-
-    const handleUnreadUpdate = () => {
-      refreshUnreadCount();
-    };
-
-    socket.on('chat:unread_update', handleUnreadUpdate);
-    socket.on('chat:new_conversation', handleUnreadUpdate);
-
+    const handleUnread = () => refreshUnreadCount();
+    socket.on('chat:unread_update', handleUnread);
+    socket.on('chat:new_conversation', handleUnread);
     return () => {
-      socket.off('chat:unread_update', handleUnreadUpdate);
-      socket.off('chat:new_conversation', handleUnreadUpdate);
+      socket.off('chat:unread_update', handleUnread);
+      socket.off('chat:new_conversation', handleUnread);
     };
   }, [refreshUnreadCount]);
 
-  // Send message
+  // Send message with OPTIMISTIC UPDATE — UI updates instantly before server confirms
   const sendMessage = useCallback(
     async (body: string, messageType: string = 'TEXT', attachmentUrl?: string) => {
       if (!conversationId || !user?.id || !body.trim()) return;
 
       const socket = getSocket();
+      socket.emit('chat:typing', { conversationId, userName: user.name, isTyping: false });
+      lastTypingState.current = false;
 
-      // Stop typing status immediately
-      socket.emit('chat:typing', {
+      // 1. Instantly show in UI with temp ID
+      const tempId = `temp_${Date.now()}`;
+      const optimisticMsg: ChatMessage = {
+        id: tempId,
         conversationId,
-        userName: user.name,
-        isTyping: false,
+        senderId: user.id,
+        body: body.trim(),
+        messageType: messageType as any,
+        attachmentUrl: attachmentUrl || null,
+        isSystem: false,
+        createdAt: new Date().toISOString(),
+        sender: { id: user.id, name: user.name, role: user.role as any },
+      };
+      setMessagesMap((prev) => {
+        const next = new Map(prev);
+        next.set(tempId, optimisticMsg);
+        return next;
       });
 
-      // Send via REST â€” backend persists to DB AND broadcasts via socket automatically
       try {
         const res = await api.sendChatMessage(conversationId, {
           body: body.trim(),
           messageType,
           attachmentUrl,
         });
-
         if (res.success && res.data) {
-          // Add optimistically if socket broadcast hasn't arrived yet
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === res.data.id)) return prev;
-            return [...prev, res.data];
+          // Swap temp for real persisted message (socket may have already added it)
+          setMessagesMap((prev) => {
+            const next = new Map(prev);
+            next.delete(tempId);
+            if (!next.has(res.data.id)) next.set(res.data.id, res.data);
+            return next;
           });
+        } else {
+          setMessagesMap((prev) => { const next = new Map(prev); next.delete(tempId); return next; });
         }
-      } catch (e) {
-        // Fallback: try socket delivery if REST failed
+      } catch {
+        setMessagesMap((prev) => { const next = new Map(prev); next.delete(tempId); return next; });
         socket.emit('chat:send', {
           conversationId,
           senderId: user.id,
@@ -199,31 +211,28 @@ export const useChat = (conversationId: string | null) => {
     [conversationId, user]
   );
 
-  // Send typing state
+  // Throttled typing — skip redundant socket events when state has not changed
   const sendTyping = useCallback(
     (typing: boolean) => {
       if (!conversationId || !user?.name) return;
+      if (lastTypingState.current === typing) return;
+      lastTypingState.current = typing;
       const socket = getSocket();
-      socket.emit('chat:typing', {
-        conversationId,
-        userName: user.name,
-        isTyping: typing,
-      });
+      socket.emit('chat:typing', { conversationId, userName: user.name, isTyping: typing });
     },
     [conversationId, user]
   );
 
-  // Toggle or set resolved
+  // Toggle resolved with optimistic update + rollback on error
   const toggleResolved = useCallback(
     async (isResolved: boolean) => {
       if (!conversationId) return;
+      setConversation((prev) => (prev ? { ...prev, isResolved } : null));
       try {
         const res = await api.resolveConversation(conversationId, isResolved);
-        if (res.success && res.data) {
-          setConversation(res.data);
-        }
-      } catch (e) {
-        console.error('Failed to resolve conversation:', e);
+        if (res.success && res.data) setConversation(res.data);
+      } catch {
+        setConversation((prev) => (prev ? { ...prev, isResolved: !isResolved } : null));
       }
     },
     [conversationId]

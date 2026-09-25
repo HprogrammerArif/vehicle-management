@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FuelLog } from '../types';
 import { api } from '../lib/api';
+import { useFuelLogs, useVehicles, useInvalidate, QK } from '../hooks/useVmsQueries';
 import { Fuel, AlertTriangle, ShieldCheck, Plus, Image, Eye, DollarSign } from 'lucide-react';
 
 export const FuelPage: React.FC = () => {
-  const [logs, setLogs] = useState<FuelLog[]>([]);
   const [filterAnomaly, setFilterAnomaly] = useState<boolean | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -20,37 +20,36 @@ export const FuelPage: React.FC = () => {
     notes: '',
   });
 
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const { data: logs = [] } = useFuelLogs();
+  const { data: vehicleList = [] } = useVehicles();
+  const invalidate = useInvalidate();
 
-  const loadData = async () => {
-    let query = '';
-    if (filterAnomaly !== null) query = `?isAnomaly=${filterAnomaly}`;
-    const [fuelRes, vehRes] = await Promise.all([api.getFuelLogs(query), api.getVehicles()]);
-    if (fuelRes.data) setLogs(fuelRes.data);
-    if (vehRes.data && vehRes.data.length > 0) {
-      setVehicles(vehRes.data);
-      setForm((prev) => ({ ...prev, vehicleId: vehRes.data[0].id }));
-    }
-  };
-
+  // Set default vehicleId when vehicles load
   useEffect(() => {
-    loadData();
-  }, [filterAnomaly]);
+    if (vehicleList.length > 0 && !form.vehicleId) {
+      setForm((prev) => ({ ...prev, vehicleId: vehicleList[0].id }));
+    }
+  }, [vehicleList]);
+
+  // Filter fuel logs by anomaly status client-side (no extra request)
+  const filteredLogs = filterAnomaly === null
+    ? logs
+    : logs.filter((l: FuelLog) => l.isAnomaly === filterAnomaly);
 
   const handleSubmitFuel = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await api.logFuel(form);
     if (res.success) {
       setShowSubmitModal(false);
-      loadData();
+      invalidate(QK.fuel());
     } else {
       alert(res.message || 'Error logging fuel');
     }
   };
 
-  const totalSpend = logs.reduce((sum, l) => sum + l.totalCost, 0);
-  const totalLiters = logs.reduce((sum, l) => sum + l.fuelAdded, 0);
-  const anomalyCount = logs.filter((l) => l.isAnomaly).length;
+  const totalSpend = filteredLogs.reduce((sum: number, l: FuelLog) => sum + l.totalCost, 0);
+  const totalLiters = filteredLogs.reduce((sum: number, l: FuelLog) => sum + l.fuelAdded, 0);
+  const anomalyCount = filteredLogs.filter((l: FuelLog) => l.isAnomaly).length;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -142,7 +141,7 @@ export const FuelPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
-              {logs.map((log) => (
+              {filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-slate-800/30 transition">
                   <td className="px-6 py-4 space-y-0.5">
                     <span className="font-bold text-white text-sm block">
@@ -213,7 +212,7 @@ export const FuelPage: React.FC = () => {
 
       {/* Receipt Preview Modal */}
       {selectedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl p-4 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="font-bold text-white text-sm">Station Fuel Receipt Proof</h3>
@@ -240,7 +239,7 @@ export const FuelPage: React.FC = () => {
 
       {/* Submit Fuel Receipt Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
             <h3 className="font-display font-bold text-white text-lg">Log Fuel & Upload Receipt</h3>
             <form onSubmit={handleSubmitFuel} className="space-y-3">
@@ -251,7 +250,7 @@ export const FuelPage: React.FC = () => {
                   onChange={(e) => setForm({ ...form, vehicleId: e.target.value })}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white"
                 >
-                  {vehicles.map((v) => (
+                  {vehicleList.map((v: any) => (
                     <option key={v.id} value={v.id}>
                       {v.make} {v.model} ({v.registrationNo})
                     </option>

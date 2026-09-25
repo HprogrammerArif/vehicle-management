@@ -86,7 +86,8 @@ export const DriverPortal: React.FC = () => {
                     {trip.tripType.replace('_', ' ')}
                   </span>
                   <h4 className="font-bold text-white text-base mt-1">
-                    {trip.fromOffice.name} &rarr; {trip.toOffice.name}
+                    {trip.fromOffice?.name || trip.pickupAddress || 'Origin'} &rarr;{' '}
+                    {trip.toOffice?.name || trip.dropoffAddress || 'Destination'}
                   </h4>
                 </div>
 

@@ -115,8 +115,27 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       });
     }
 
+    // New conversation: do a full reload (rare event, acceptable)
     const handleNewConv = () => loadConversations();
-    const handleUnreadUpdate = () => loadConversations();
+
+    // Unread update: bump the affected conversation to the top locally
+    // instead of full DB reload on every message
+    const handleUnreadUpdate = (data: { conversationId?: string } | undefined) => {
+      if (data?.conversationId) {
+        setConversations((prev) => {
+          const idx = prev.findIndex((c) => c.id === data.conversationId);
+          if (idx <= 0) return prev; // already at top or not found
+          const updated = [...prev];
+          const [item] = updated.splice(idx, 1);
+          updated.unshift(item);
+          return updated;
+        });
+      } else {
+        // Fallback: full reload only if no conversationId provided
+        loadConversations();
+      }
+    };
+
     const handlePresence = (data: { onlineUserIds: string[] }) => {
       if (Array.isArray(data?.onlineUserIds)) {
         setOnlineUserIds(data.onlineUserIds);
@@ -252,7 +271,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
             const lastMessage = conv.messages[0]; // last message (desc from API)
             const otherParticipants = conv.participants
               .filter((p) => p.userId !== user?.id)
-              .map((p) => p.user.name)
+              .map((p) => p.user?.name || 'User')
               .join(', ');
 
             return (

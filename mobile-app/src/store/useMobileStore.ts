@@ -1,58 +1,79 @@
 import { create } from 'zustand';
+import { authStorage } from '../services/storage';
 
 export interface MobileUser {
   id: string;
   name: string;
   email?: string;
+  employeeId?: string;
   role: 'EMPLOYEE' | 'DRIVER' | 'ADMIN';
   department?: string;
   phone?: string;
   driverId?: string;
+  organization?: string;
 }
 
 interface MobileStore {
   user: MobileUser | null;
-  role: 'EMPLOYEE' | 'DRIVER';
   token: string | null;
+  isInitialized: boolean;
   unreadChatCount: number;
+  unreadNotifCount: number;
+  initAuth: () => Promise<void>;
   setUser: (user: MobileUser | null) => void;
-  setRole: (role: 'EMPLOYEE' | 'DRIVER') => void;
   setToken: (token: string | null) => void;
+  setSession: (token: string, user: MobileUser) => Promise<void>;
   setUnreadChatCount: (count: number) => void;
+  setUnreadNotifCount: (count: number) => void;
+  logout: () => Promise<void>;
+  // Derived helper
+  role: 'EMPLOYEE' | 'DRIVER' | null;
 }
 
-// Default mock profiles matching demo seeds
-export const DEFAULT_EMPLOYEE: MobileUser = {
-  id: 'cmuf7ss2c0003f6wpudwaswfg',
-  name: 'Johnathan Doe',
-  email: 'john.doe@vms.com',
-  role: 'EMPLOYEE',
-  department: 'Factory Engineering',
-  phone: '+880 1812 222333',
-};
-
-export const DEFAULT_DRIVER: MobileUser = {
-  id: 'cmuf7su0n0007f6wpl5c77ukh',
-  name: 'Mohammad Rahim',
-  email: 'driver.rahim@vms.com',
-  role: 'DRIVER',
-  department: 'Heavy Fleet Transport',
-  phone: '+880 1614 777888',
-  driverId: 'cmuf7sv730009f6wp06cs1lke',
-};
-
-export const useMobileStore = create<MobileStore>((set) => ({
-  user: DEFAULT_EMPLOYEE,
-  role: 'EMPLOYEE',
+export const useMobileStore = create<MobileStore>((set, get) => ({
+  user: null,
   token: null,
+  isInitialized: false,
   unreadChatCount: 0,
+  unreadNotifCount: 0,
+
+  get role() {
+    const u = get().user;
+    if (!u) return null;
+    return u.role === 'DRIVER' ? 'DRIVER' : 'EMPLOYEE';
+  },
+
+  initAuth: async () => {
+    try {
+      const { token, user } = await authStorage.loadSession();
+      if (token && user) {
+        set({ token, user, isInitialized: true });
+        return;
+      }
+    } catch (e) {
+      console.warn('Failed to restore session:', e);
+    }
+    set({ isInitialized: true });
+  },
+
   setUser: (user) => set({ user }),
-  setRole: (role) => {
+  setToken: (token) => set({ token }),
+
+  setSession: async (token: string, user: MobileUser) => {
+    set({ token, user });
+    await authStorage.saveSession(token, user);
+  },
+
+  setUnreadChatCount: (unreadChatCount) => set({ unreadChatCount }),
+  setUnreadNotifCount: (unreadNotifCount) => set({ unreadNotifCount }),
+
+  logout: async () => {
+    await authStorage.clearSession();
     set({
-      role,
-      user: role === 'EMPLOYEE' ? DEFAULT_EMPLOYEE : DEFAULT_DRIVER,
+      user: null,
+      token: null,
+      unreadChatCount: 0,
+      unreadNotifCount: 0,
     });
   },
-  setToken: (token) => set({ token }),
-  setUnreadChatCount: (unreadChatCount) => set({ unreadChatCount }),
 }));

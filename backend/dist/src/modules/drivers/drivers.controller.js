@@ -12,7 +12,7 @@ const getDrivers = async (req, res) => {
             where,
             include: {
                 user: {
-                    select: { id: true, name: true, email: true, phone: true, profilePhoto: true, isActive: true },
+                    select: { id: true, name: true, email: true, phone: true, employeeId: true, profilePhoto: true, isActive: true },
                 },
                 _count: {
                     select: { assignedTrips: true, fuelLogs: true, leaveRequests: true },
@@ -32,7 +32,7 @@ const getAvailableDrivers = async (req, res) => {
         const drivers = await db_1.prisma.driver.findMany({
             where: { status: 'AVAILABLE' },
             include: {
-                user: { select: { id: true, name: true, phone: true, email: true } },
+                user: { select: { id: true, name: true, phone: true, email: true, employeeId: true } },
             },
         });
         return res.json({ success: true, data: drivers });
@@ -85,7 +85,7 @@ const updateDriverStatus = async (req, res) => {
         const driver = await db_1.prisma.driver.update({
             where: { id },
             data: { status },
-            include: { user: { select: { name: true } } },
+            include: { user: { select: { name: true, employeeId: true } } },
         });
         return res.json({ success: true, data: driver });
     }

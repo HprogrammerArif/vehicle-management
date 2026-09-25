@@ -122,13 +122,18 @@ export const TripContextPanel: React.FC<TripContextPanelProps> = ({ conversation
         </div>
 
         {participants.map((p) => {
-          const isOnline = onlineUserIds.includes(p.userId);
-          const initials = p.user.name
+          if (!p) return null;
+          const user = p.user;
+          const userName = user?.name || 'Former Member';
+          const userRole = user?.role || 'UNKNOWN';
+          const isOnline = user ? onlineUserIds.includes(p.userId) : false;
+          const initials = userName
             .split(' ')
+            .filter(Boolean)
             .map((w: string) => w[0])
             .join('')
             .substring(0, 2)
-            .toUpperCase();
+            .toUpperCase() || 'U';
 
           return (
             <div
@@ -139,7 +144,7 @@ export const TripContextPanel: React.FC<TripContextPanelProps> = ({ conversation
               <div className="relative shrink-0">
                 <div
                   className={`w-9 h-9 rounded-full bg-gradient-to-tr ${getAvatarGradient(
-                    p.user.name
+                    userName
                   )} flex items-center justify-center text-white text-xs font-bold shadow-md shadow-slate-950/40`}
                 >
                   {initials}
@@ -154,19 +159,19 @@ export const TripContextPanel: React.FC<TripContextPanelProps> = ({ conversation
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1">
-                  <p className="text-xs font-semibold text-slate-200 truncate">{p.user.name}</p>
+                  <p className="text-xs font-semibold text-slate-200 truncate">{userName}</p>
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span
                     className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded border ${
-                      p.user.role === 'ADMIN'
+                      userRole === 'ADMIN'
                         ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                        : p.user.role === 'DRIVER'
+                        : userRole === 'DRIVER'
                         ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                         : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
                     }`}
                   >
-                    {p.user.role}
+                    {userRole}
                   </span>
                   <span className={`text-[10px] ${isOnline ? 'text-emerald-400 font-medium' : 'text-slate-500'}`}>
                     {isOnline ? 'Active now' : 'Offline'}

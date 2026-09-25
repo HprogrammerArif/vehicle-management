@@ -162,3 +162,71 @@
 {"_e":"metro:client_log","_t":1790249062005,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
 {"_e":"metro:client_log","_t":1790249067042,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
 {"_e":"metro:client_log","_t":1790249072074,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:bundling:started","_t":1790264931378,"id":"5","platform":"android","environment":null,"entry":"..\\..\\..\\p\\expo-router@57.0.22_2d6a8199405e0fbcde0a2189059fb669\\node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790264931378,"id":"5","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790264931456,"id":"5","total":1,"ms":77.7857}
+{"_e":"metro:bundling:started","_t":1790269367523,"id":"6","platform":"android","environment":null,"entry":"..\\..\\..\\p\\expo-router@57.0.22_2d6a8199405e0fbcde0a2189059fb669\\node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790269367524,"id":"6","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790269367868,"id":"6","total":1,"ms":343.7661}
+{"_e":"root:init","_t":1790305320454,"format":"v0-jsonl","version":"57.0.26"}
+{"_e":"devserver:start","_t":1790305320604,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1790305328423,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1790305330038,"plugins":[]}
+{"_e":"metro:instantiate","_t":1790305349322,"atlas":false,"workers":8,"host":"::","port":8081}
+{"_e":"metro:bundling:started","_t":1790305355924,"id":"1","platform":"android","environment":null,"entry":"..\\..\\..\\p\\expo-router@57.0.22_2d6a8199405e0fbcde0a2189059fb669\\node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790305355925,"id":"1","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790305355932,"id":"1","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790305356037,"id":"1","progress":0.10749798441279225,"total":61,"current":20}
+{"_e":"metro:bundling:progress","_t":1790305356137,"id":"1","progress":0.10749798441279225,"total":260,"current":61}
+{"_e":"metro:bundling:progress","_t":1790305356237,"id":"1","progress":0.1324209160844328,"total":349,"current":127}
+{"_e":"metro:bundling:progress","_t":1790305356337,"id":"1","progress":0.2048057967925835,"total":411,"current":186}
+{"_e":"metro:bundling:progress","_t":1790305356437,"id":"1","progress":0.2649518876335973,"total":509,"current":262}
+{"_e":"metro:bundling:progress","_t":1790305356537,"id":"1","progress":0.30594143592047746,"total":593,"current":328}
+{"_e":"metro:bundling:progress","_t":1790305356637,"id":"1","progress":0.33500545972528956,"total":698,"current":404}
+{"_e":"metro:bundling:progress","_t":1790305356737,"id":"1","progress":0.3614922263801551,"total":805,"current":484}
+{"_e":"metro:bundling:progress","_t":1790305356838,"id":"1","progress":0.4337812128418549,"total":870,"current":573}
+{"_e":"metro:bundling:progress","_t":1790305356937,"id":"1","progress":0.5387495187832891,"total":906,"current":665}
+{"_e":"metro:bundling:progress","_t":1790305357037,"id":"1","progress":0.7162504155124654,"total":950,"current":804}
+{"_e":"metro:bundling:progress","_t":1790305357148,"id":"1","progress":0.8039929416764443,"total":987,"current":885}
+{"_e":"metro:bundling:progress","_t":1790305357248,"id":"1","progress":0.8634032669119562,"total":1031,"current":958}
+{"_e":"metro:bundling:progress","_t":1790305357348,"id":"1","progress":0.9230032734930464,"total":1095,"current":1052}
+{"_e":"metro:bundling:progress","_t":1790305357448,"id":"1","progress":0.9275370478807261,"total":1192,"current":1148}
+{"_e":"metro:bundling:progress","_t":1790305357548,"id":"1","progress":0.9494142056633617,"total":1288,"current":1255}
+{"_e":"metro:bundling:progress","_t":1790305357651,"id":"1","progress":0.9985310321483154,"total":1361,"current":1360}
+{"_e":"metro:bundling:progress","_t":1790305361599,"id":"1","progress":0.999,"total":1361,"current":1361}
+{"_e":"metro:bundling:progress","_t":1790305361699,"id":"1","progress":0.999,"total":1407,"current":1390}
+{"_e":"metro:bundling:progress","_t":1790305361916,"id":"1","progress":0.999,"total":1409,"current":1392}
+{"_e":"metro:bundling:progress","_t":1790305362118,"id":"1","progress":0.999,"total":2966,"current":1392}
+{"_e":"metro:bundling:progress","_t":1790305362174,"id":"1","progress":0.999,"total":2966,"current":1393}
+{"_e":"metro:bundling:progress","_t":1790305362274,"id":"1","progress":0.999,"total":2967,"current":1394}
+{"_e":"metro:bundling:progress","_t":1790305362372,"id":"1","progress":0.999,"total":2967,"current":1395}
+{"_e":"metro:bundling:progress","_t":1790305362472,"id":"1","progress":0.999,"total":2970,"current":1572}
+{"_e":"metro:bundling:progress","_t":1790305362572,"id":"1","progress":0.999,"total":2970,"current":2074}
+{"_e":"metro:bundling:progress","_t":1790305362672,"id":"1","progress":0.999,"total":2970,"current":2656}
+{"_e":"metro:bundling:progress","_t":1790305362799,"id":"1","progress":0.999,"total":2978,"current":2963}
+{"_e":"metro:bundling:progress","_t":1790305362898,"id":"1","progress":0.999,"total":3127,"current":3097}
+{"_e":"metro:bundling:progress","_t":1790305363002,"id":"1","progress":0.999,"total":3136,"current":3129}
+{"_e":"metro:bundling:progress","_t":1790305363176,"id":"1","progress":0.999,"total":3136,"current":3130}
+{"_e":"metro:bundling:progress","_t":1790305363282,"id":"1","progress":0.999,"total":3139,"current":3134}
+{"_e":"metro:bundling:progress","_t":1790305363397,"id":"1","progress":0.999,"total":3142,"current":3140}
+{"_e":"metro:bundling:progress","_t":1790305363503,"id":"1","progress":0.999,"total":3142,"current":3142}
+{"_e":"metro:bundling:done","_t":1790305363666,"id":"1","total":3142,"ms":7742.1787}
+{"_e":"metro:client_log","_t":1790305480424,"level":"log","data":["Mobile Socket connected:","VYJyjuvMKbX2NZtbAAAB"]}
+{"_e":"metro:client_log","_t":1790305984234,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790305988408,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790305992572,"level":"log","data":["Mobile Socket connected:","fFVJPtypsh6gWYv6AAAA"]}
+{"_e":"metro:client_log","_t":1790306070332,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790306074310,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790306080582,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790306087644,"level":"warn","data":["Mobile Socket connection error:","websocket error"]}
+{"_e":"metro:client_log","_t":1790306092869,"level":"log","data":["Mobile Socket connected:","XV3iKvC7iEhgvjQnAAAB"]}
+{"_e":"metro:client_log","_t":1790306125036,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790306127042,"level":"log","data":["Mobile Socket connected:","-uBZam8vR_dvrdw-AAAA"]}
+{"_e":"metro:client_log","_t":1790306226107,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790306229724,"level":"log","data":["Mobile Socket connected:","F5vBv_NV1VtmXzGyAAAB"]}
+{"_e":"metro:client_log","_t":1790306806255,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790306809075,"level":"log","data":["Mobile Socket connected:","ddMKDW0_TUHflfmNAAAB"]}
+{"_e":"metro:client_log","_t":1790306818599,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790306820986,"level":"log","data":["Mobile Socket connected:","TpSJ1cUIgxfxxVAcAAAB"]}
+{"_e":"metro:client_log","_t":1790306842545,"level":"log","data":["Mobile Socket disconnected:","transport error"]}
+{"_e":"metro:client_log","_t":1790306845104,"level":"log","data":["Mobile Socket connected:","Cbx6t3ROvh18dHOyAAAB"]}

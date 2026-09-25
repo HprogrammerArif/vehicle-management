@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { MaintenanceLog, Vehicle } from '../types';
+import { Vehicle } from '../types';
 import { api } from '../lib/api';
+import { useMaintenanceLogs, useVehicles, useInvalidate, QK } from '../hooks/useVmsQueries';
 import { Wrench, Plus, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 export const MaintenancePage: React.FC = () => {
-  const [logs, setLogs] = useState<MaintenanceLog[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [showModal, setShowModal] = useState(false);
 
   const [form, setForm] = useState({
@@ -16,34 +15,29 @@ export const MaintenancePage: React.FC = () => {
     scheduledAt: new Date().toISOString().split('T')[0],
   });
 
-  const loadData = async () => {
-    const [maintRes, vehRes] = await Promise.all([
-      api.getMaintenanceLogs(),
-      api.getVehicles(),
-    ]);
-    if (maintRes.data) setLogs(maintRes.data);
-    if (vehRes.data && vehRes.data.length > 0) {
-      setVehicles(vehRes.data);
-      setForm((prev) => ({ ...prev, vehicleId: vehRes.data[0].id }));
-    }
-  };
+  const { data: logs = [] } = useMaintenanceLogs();
+  const { data: vehicles = [] } = useVehicles();
+  const invalidate = useInvalidate();
 
+  // Set default vehicleId when vehicles load
   useEffect(() => {
-    loadData();
-  }, []);
+    if (vehicles.length > 0 && !form.vehicleId) {
+      setForm((prev) => ({ ...prev, vehicleId: vehicles[0].id }));
+    }
+  }, [vehicles]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await api.createMaintenance(form);
     if (res.success) {
       setShowModal(false);
-      loadData();
+      invalidate(QK.maintenance());
     }
   };
 
   const handleComplete = async (id: string) => {
     await api.completeMaintenance(id, { notes: 'Servicing completed & vehicle certified roadworthy.' });
-    loadData();
+    invalidate(QK.maintenance());
   };
 
   return (
@@ -120,7 +114,7 @@ export const MaintenancePage: React.FC = () => {
 
       {/* Schedule Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
             <h3 className="font-display font-bold text-white text-lg">Schedule Vehicle Maintenance</h3>
             <form onSubmit={handleCreate} className="space-y-3">

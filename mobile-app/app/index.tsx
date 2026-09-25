@@ -1,109 +1,155 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMobileStore, DEFAULT_EMPLOYEE, DEFAULT_DRIVER } from '../src/store/useMobileStore';
 import { authApi } from '../src/services/api';
+import { useMobileStore } from '../src/store/useMobileStore';
 import { getMobileSocket } from '../src/services/socket';
 
-export default function IndexScreen() {
+export default function LoginScreen() {
   const router = useRouter();
-  const { setRole, setUser, setToken } = useMobileStore();
-  const [loadingRole, setLoadingRole] = useState<'EMPLOYEE' | 'DRIVER' | null>(null);
+  const { setSession } = useMobileStore();
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleSelectRole = async (selectedRole: 'EMPLOYEE' | 'DRIVER') => {
-    setLoadingRole(selectedRole);
-    setRole(selectedRole);
+  const handleLogin = async () => {
+    if (!identifier.trim() || !password.trim()) {
+      Alert.alert('Missing Fields', 'Please enter your Employee ID and password.');
+      return;
+    }
 
+    setLoading(true);
     try {
-      // Auto-authenticate as the default demo employee or driver
-      const email = selectedRole === 'EMPLOYEE' ? 'john.doe@vms.com' : 'driver.rahim@vms.com';
-      const password = selectedRole === 'EMPLOYEE' ? 'password123' : 'driver123';
+      const res = await authApi.login(identifier.trim(), password);
 
-      const res = await authApi.login(email, password);
       if (res?.success && res.token && res.user) {
-        setToken(res.token);
-        setUser(res.user);
+        await setSession(res.token, {
+          id: res.user.id,
+          name: res.user.name,
+          email: res.user.email,
+          employeeId: res.user.employeeId,
+          role: res.user.role,
+          department: res.user.department,
+          driverId: res.user.driverId,
+          organization: res.user.organization,
+        });
 
-        // Identify online presence to socket server
+        // Connect to socket and announce presence
         const socket = getMobileSocket();
         socket.emit('user:online', {
           userId: res.user.id,
           name: res.user.name,
-          role: selectedRole,
+          role: res.user.role,
         });
+
+        // Route by role
+        if (res.user.role === 'DRIVER') {
+          router.replace('/(driver)/active-trip');
+        } else {
+          router.replace('/(employee)/my-trips');
+        }
       } else {
-        // Fallback to seeded default profile
-        setUser(selectedRole === 'EMPLOYEE' ? DEFAULT_EMPLOYEE : DEFAULT_DRIVER);
+        Alert.alert('Login Failed', res?.message || 'Invalid credentials. Please try again.');
       }
     } catch (err) {
-      console.warn('Auto-login failed, using fallback profile:', err);
-      setUser(selectedRole === 'EMPLOYEE' ? DEFAULT_EMPLOYEE : DEFAULT_DRIVER);
+      Alert.alert('Connection Error', 'Could not reach the server. Check your network.');
     } finally {
-      setLoadingRole(null);
-      if (selectedRole === 'EMPLOYEE') {
-        router.push('/(employee)/request-trip');
-      } else {
-        router.push('/(driver)/active-trip');
-      }
+      setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.logoBadge}>
-          <Image
-            source={require('../assets/icon.png')}
-            style={styles.logoImage}
-            resizeMode="cover"
-          />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.logoBadge}>
+            <Image
+              source={require('../assets/icon.png')}
+              style={styles.logoImage}
+              resizeMode="cover"
+            />
+          </View>
+          <Text style={styles.title}>Apex VMS</Text>
+          <Text style={styles.subtitle}>Enterprise Vehicle Management System</Text>
         </View>
-        <Text style={styles.title}>Apex VMS</Text>
-        <Text style={styles.subtitle}>Enterprise Transit & Driver Telemetry</Text>
-      </View>
 
-      <View style={styles.cardContainer}>
-        <Text style={styles.sectionTitle}>Select Your Role</Text>
+        {/* Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Sign In</Text>
+          <Text style={styles.cardSubtitle}>
+            Use your Employee ID or email assigned by your administrator
+          </Text>
 
-        <TouchableOpacity
-          style={styles.roleCard}
-          onPress={() => handleSelectRole('EMPLOYEE')}
-          activeOpacity={0.8}
-          disabled={loadingRole !== null}
-        >
-          <Text style={styles.roleIcon}>👤</Text>
-          <View style={styles.roleTextContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={styles.roleTitle}>Employee Portal</Text>
-              {loadingRole === 'EMPLOYEE' && <ActivityIndicator size="small" color="#6366f1" />}
-            </View>
-            <Text style={styles.roleDesc}>
-              Request corporate transport, choose office routes, add colleagues
-            </Text>
+          <View style={styles.field}>
+            <Text style={styles.label}>Employee ID or Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. EMP-001 or john@vms.com"
+              placeholderTextColor="#475569"
+              value={identifier}
+              onChangeText={setIdentifier}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+            />
           </View>
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.roleCard, styles.driverCard]}
-          onPress={() => handleSelectRole('DRIVER')}
-          activeOpacity={0.8}
-          disabled={loadingRole !== null}
-        >
-          <Text style={styles.roleIcon}>🏎️</Text>
-          <View style={styles.roleTextContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={styles.roleTitle}>Driver Console</Text>
-              {loadingRole === 'DRIVER' && <ActivityIndicator size="small" color="#818cf8" />}
+          <View style={styles.field}>
+            <Text style={styles.label}>Password</Text>
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.input, styles.passwordInput]}
+                placeholder="Enter your password"
+                placeholderTextColor="#475569"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                style={styles.eyeBtn}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.roleDesc}>
-              Stream live GPS coordinates, manage missions, upload fuel receipts
-            </Text>
           </View>
-        </TouchableOpacity>
-      </View>
 
-      <Text style={styles.footerText}>Connected to Apex Corporate Telemetry Server</Text>
-    </View>
+          <TouchableOpacity
+            style={[styles.btn, loading && styles.btnDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.btnText}>Sign In</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.footer}>
+          Contact your administrator if you don't have credentials
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -111,16 +157,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#020617',
+  },
+  scroll: {
+    flexGrow: 1,
     padding: 24,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginTop: 40,
+    marginBottom: 36,
   },
   logoBadge: {
-    width: 76,
-    height: 76,
+    width: 80,
+    height: 80,
     borderRadius: 22,
     backgroundColor: '#0f172a',
     borderWidth: 1.5,
@@ -131,69 +180,105 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
   },
   logoImage: {
     width: '100%',
     height: '100%',
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
     color: '#ffffff',
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 13,
-    color: '#94a3b8',
-    marginTop: 4,
-  },
-  cardContainer: {
-    gap: 16,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
     color: '#64748b',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
+    marginTop: 4,
+    textAlign: 'center',
   },
-  roleCard: {
+  card: {
     backgroundColor: '#0f172a',
-    borderRadius: 16,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 20,
+    padding: 24,
     borderWidth: 1,
     borderColor: '#1e293b',
+    gap: 16,
   },
-  driverCard: {
-    borderColor: '#312e81',
-  },
-  roleIcon: {
-    fontSize: 32,
-    marginRight: 16,
-  },
-  roleTextContainer: {
-    flex: 1,
-  },
-  roleTitle: {
-    fontSize: 16,
+  cardTitle: {
+    fontSize: 20,
     fontWeight: '700',
     color: '#f8fafc',
   },
-  roleDesc: {
+  cardSubtitle: {
     fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 4,
-    lineHeight: 16,
+    color: '#64748b',
+    lineHeight: 18,
+    marginTop: -8,
   },
-  footerText: {
+  field: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  input: {
+    backgroundColor: '#020617',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    color: '#f8fafc',
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+  },
+  passwordRow: {
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 52,
+  },
+  eyeBtn: {
+    position: 'absolute',
+    right: 14,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  eyeText: {
+    fontSize: 18,
+  },
+  btn: {
+    backgroundColor: '#4f46e5',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 4,
+    shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  btnDisabled: {
+    opacity: 0.6,
+  },
+  btnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  footer: {
     textAlign: 'center',
     fontSize: 11,
-    color: '#475569',
-    marginBottom: 20,
+    color: '#334155',
+    marginTop: 24,
   },
 });
