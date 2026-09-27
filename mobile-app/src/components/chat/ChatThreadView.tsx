@@ -10,12 +10,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   Image,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import { useToast } from '../AppToast';
 import {
   Send,
   ArrowLeft,
@@ -53,6 +53,7 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useMobileStore();
+  const { showToast } = useToast();
   const [conversation, setConversation] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState('');
@@ -199,7 +200,11 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Needed', 'Please allow gallery access to send photo attachments.');
+        showToast({
+          type: 'warning',
+          title: 'Permission Needed',
+          message: 'Please allow gallery access to send photo attachments.',
+        });
         return;
       }
 
@@ -226,11 +231,19 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
             });
           }
         } else {
-          Alert.alert('Upload Failed', uploadRes?.message || 'Could not upload photo');
+          showToast({
+            type: 'error',
+            title: 'Upload Failed',
+            message: uploadRes?.message || 'Could not upload photo.',
+          });
         }
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Image picker error');
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Image picker error',
+      });
     } finally {
       setIsUploading(false);
     }
@@ -240,7 +253,11 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Needed', 'Location permission is required to share GPS coordinates with dispatch.');
+        showToast({
+          type: 'warning',
+          title: 'Permission Needed',
+          message: 'Location permission is required to share GPS coordinates with dispatch.',
+        });
         return;
       }
 
@@ -263,7 +280,11 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
         });
       }
     } catch (err: any) {
-      Alert.alert('Location Error', err.message || 'Could not fetch current GPS location');
+      showToast({
+        type: 'error',
+        title: 'Location Error',
+        message: err.message || 'Could not fetch current GPS location.',
+      });
     } finally {
       setIsUploading(false);
     }

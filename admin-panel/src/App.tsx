@@ -16,6 +16,7 @@ import { ChatPage } from './pages/ChatPage';
 import { LoginPage } from './pages/LoginPage';
 import { getSocket } from './lib/socket';
 import { api } from './lib/api';
+import { ToastContainer } from './components/common/Toast';
 
 export const App: React.FC = () => {
   const { activeTab, setUnreadChatCount, setUser, setIsAuthenticated, isAuthenticated, user } = useStore();
@@ -150,6 +151,7 @@ export const App: React.FC = () => {
           {renderContent()}
         </main>
       </div>
+      <ToastContainer />
     </div>
   );
 };

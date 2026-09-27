@@ -9,7 +9,6 @@ import {
   RefreshControl,
   Modal,
   TextInput,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -26,6 +25,7 @@ import { mobileChatApi } from '../../services/api';
 import { getMobileSocket } from '../../services/socket';
 import { useMobileStore } from '../../store/useMobileStore';
 import { colors } from '../../theme/colors';
+import { useToast } from '../AppToast';
 
 interface ConversationListViewProps {
   role: 'EMPLOYEE' | 'DRIVER';
@@ -34,6 +34,7 @@ interface ConversationListViewProps {
 export const ConversationListView: React.FC<ConversationListViewProps> = ({ role }) => {
   const router = useRouter();
   const { user } = useMobileStore();
+  const { showToast } = useToast();
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -90,7 +91,11 @@ export const ConversationListView: React.FC<ConversationListViewProps> = ({ role
 
   const handleCreateConversation = async () => {
     if (!newSubject.trim()) {
-      Alert.alert('Subject Required', 'Please enter a brief topic or subject for this ticket.');
+      showToast({
+        type: 'warning',
+        title: 'Subject Required',
+        message: 'Please enter a brief topic or subject for this ticket.',
+      });
       return;
     }
 
@@ -115,10 +120,18 @@ export const ConversationListView: React.FC<ConversationListViewProps> = ({ role
             : `/(driver)/chat/${res.data.id}`;
         router.push(targetPath as any);
       } else {
-        Alert.alert('Error', res.message || 'Could not initiate conversation');
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: res.message || 'Could not initiate conversation.',
+        });
       }
     } catch (e: any) {
-      Alert.alert('Connection Failed', e.message || 'Server did not respond');
+      showToast({
+        type: 'error',
+        title: 'Connection Failed',
+        message: e.message || 'Server did not respond.',
+      });
     } finally {
       setCreating(false);
     }

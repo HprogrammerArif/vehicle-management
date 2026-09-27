@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { api } from '../lib/api';
 import { Trip } from '../types';
-import { useDashboardStats, useTrips, useInvalidate, QK } from '../hooks/useVmsQueries';
+import { useDashboardStats, useTrips, useAllUsers, useInvalidate, QK } from '../hooks/useVmsQueries';
 import { LiveFleetMap } from '../components/map/LiveFleetMap';
 import { AssignTripModal } from '../components/trips/AssignTripModal';
+import { toast } from '../components/common/Toast';
 import {
   Truck,
   Users,
@@ -18,6 +19,7 @@ import {
   Bell,
   Send,
   MapPin,
+  ChevronDown,
 } from 'lucide-react';
 
 /** Resolves display location — office name OR custom free-text address */
@@ -39,6 +41,9 @@ const NOTIFICATION_TARGETS = [
 export const Dashboard: React.FC = () => {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: pendingTrips = [], isLoading: tripsLoading } = useTrips('PENDING');
+  // Fetch all trips and all users for targeting
+  const { data: allTrips = [] } = useTrips();
+  const { data: allUsers = [] } = useAllUsers();
   const invalidate = useInvalidate();
   const loading = statsLoading || tripsLoading;
 
@@ -53,10 +58,12 @@ export const Dashboard: React.FC = () => {
   const [sendingNotif, setSendingNotif] = useState(false);
   const [notifSent, setNotifSent] = useState(false);
 
-
   const handleSendNotification = async () => {
     if (!notifTitle.trim() || !notifBody.trim()) return;
-    if ((notifTarget === 'TRIP' || notifTarget === 'USER') && !notifTargetId.trim()) return;
+    if ((notifTarget === 'TRIP' || notifTarget === 'USER') && !notifTargetId.trim()) {
+      toast.error(notifTarget === 'TRIP' ? 'Please select or enter a Trip' : 'Please select or enter a Person');
+      return;
+    }
     setSendingNotif(true);
     try {
       const payload: any = {
@@ -68,6 +75,7 @@ export const Dashboard: React.FC = () => {
         payload.tripId = notifTargetId.trim();
       } else if (notifTarget === 'USER') {
         payload.userId = notifTargetId.trim();
+        payload.employeeId = notifTargetId.trim();
       }
 
       const res = await api.sendNotification(payload);
@@ -77,11 +85,13 @@ export const Dashboard: React.FC = () => {
         setNotifBody('');
         setNotifTargetId('');
         setTimeout(() => setNotifSent(false), 3000);
-        // Refresh stats after notification send
         invalidate(QK.stats);
+        toast.success(`Notification delivered to ${res.recipients ?? 1} recipient(s).`);
       } else {
-        alert(res.message || 'Failed to send notification');
+        toast.error(res.message || 'Failed to send notification');
       }
+    } catch (err: any) {
+      toast.error(err?.message || 'Network error while sending notification');
     } finally {
       setSendingNotif(false);
     }
@@ -347,28 +357,95 @@ export const Dashboard: React.FC = () => {
 
             {/* Dynamic Specific Target Input */}
             {notifTarget === 'TRIP' && (
-              <div className="pt-1">
-                <input
-                  type="text"
+              <div className="pt-1 space-y-2">
+                <select
                   value={notifTargetId}
                   onChange={(e) => setNotifTargetId(e.target.value)}
-                  placeholder="Trip ID (e.g. cmu...)"
-                  className="w-full bg-slate-900 border border-indigo-500/40 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 transition"
-                />
-                <p className="text-[10px] text-slate-500 mt-1">Notifies requester, assigned driver &amp; passengers</p>
+                  className="w-full bg-slate-900 border border-indigo-500/40 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-400 transition cursor-pointer"
+                >
+                  <option value="" className="text-slate-500">— Select a Trip from the fleet —</option>
+                  {allTrips.map((trip: any) => {
+                    const from = trip.fromOffice?.name || trip.pickupAddress || 'Origin';
+                    const to = trip.toOffice?.name || trip.dropoffAddress || 'Destination';
+                    const driverInfo = trip.driver?.user?.name
+                      ? `Driver: ${trip.driver.user.name} (${trip.driver.user.employeeId || 'Assigned'})`
+                      : 'Unassigned';
+                    const statusIcon =
+                      trip.status === 'IN_PROGRESS'
+                        ? '🟢'
+                        : trip.status === 'APPROVED'
+                        ? '🟡'
+                        : trip.status === 'PENDING'
+                        ? '⏳'
+                        : '⚪';
+                    return (
+                      <option key={trip.id} value={trip.id} className="bg-slate-900">
+                        {statusIcon} [{trip.status}] {trip.purpose || `${from} → ${to}`} • {driverInfo}
+                      </option>
+                    );
+                  })}
+                </select>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider shrink-0">or manually:</span>
+                  <input
+                    type="text"
+                    value={notifTargetId}
+                    onChange={(e) => setNotifTargetId(e.target.value)}
+                    placeholder="Enter Trip ID or Driver ID (e.g. DRV-005)"
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 transition"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500">Notifies requester, assigned driver &amp; all trip passengers</p>
               </div>
             )}
 
             {notifTarget === 'USER' && (
-              <div className="pt-1">
-                <input
-                  type="text"
+              <div className="pt-1 space-y-2">
+                <select
                   value={notifTargetId}
                   onChange={(e) => setNotifTargetId(e.target.value)}
-                  placeholder="Employee ID or Email (e.g. EMP-104)"
-                  className="w-full bg-slate-900 border border-indigo-500/40 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 transition"
-                />
-                <p className="text-[10px] text-slate-500 mt-1">Delivers directly to specific user inbox</p>
+                  className="w-full bg-slate-900 border border-indigo-500/40 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-400 transition cursor-pointer"
+                >
+                  <option value="" className="text-slate-500">— Select Person from directory —</option>
+                  <optgroup label="Drivers" className="bg-slate-900 text-indigo-300 font-semibold">
+                    {allUsers
+                      .filter((u: any) => u.role === 'DRIVER')
+                      .map((u: any) => (
+                        <option key={u.id} value={u.employeeId || u.id} className="bg-slate-900 text-white font-normal">
+                          🚗 {u.name} ({u.employeeId || 'Driver'}) — {u.email}
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label="Employees" className="bg-slate-900 text-indigo-300 font-semibold">
+                    {allUsers
+                      .filter((u: any) => u.role === 'EMPLOYEE')
+                      .map((u: any) => (
+                        <option key={u.id} value={u.employeeId || u.id} className="bg-slate-900 text-white font-normal">
+                          👤 {u.name} ({u.employeeId || 'Employee'}) — {u.department || u.email}
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label="Administrators" className="bg-slate-900 text-indigo-300 font-semibold">
+                    {allUsers
+                      .filter((u: any) => u.role === 'ADMIN')
+                      .map((u: any) => (
+                        <option key={u.id} value={u.employeeId || u.id} className="bg-slate-900 text-white font-normal">
+                          🛡️ {u.name} ({u.employeeId || 'Admin'})
+                        </option>
+                      ))}
+                  </optgroup>
+                </select>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider shrink-0">or manually:</span>
+                  <input
+                    type="text"
+                    value={notifTargetId}
+                    onChange={(e) => setNotifTargetId(e.target.value)}
+                    placeholder="Enter Employee ID (DRV-005, EMP-104) or email"
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 transition"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500">Delivers instantly to specific user inbox &amp; phone</p>
               </div>
             )}
           </div>

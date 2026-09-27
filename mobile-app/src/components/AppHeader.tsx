@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   Bell,
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native';
 import { useMobileStore } from '../store/useMobileStore';
 import { getMobileSocket } from '../services/socket';
+import { useAppAlert } from './AppAlert';
 
 interface AppHeaderProps {
   title?: string;
@@ -21,27 +22,24 @@ interface AppHeaderProps {
 export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => {
   const router = useRouter();
   const { user, logout, unreadNotifCount, unreadChatCount } = useMobileStore();
+  const { showConfirm } = useAppAlert();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Sign Out',
-      `Sign out from ${user?.name || 'account'} (${user?.employeeId || user?.role})?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            const socket = getMobileSocket();
-            if (user?.id) {
-              socket.emit('user:offline', { userId: user.id });
-            }
-            await logout();
-            router.replace('/');
-          },
-        },
-      ]
-    );
+    showConfirm({
+      title: 'Sign Out',
+      message: `Sign out from ${user?.name || 'account'} (${user?.employeeId || user?.role})?`,
+      type: 'danger',
+      confirmText: 'Sign Out',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        const socket = getMobileSocket();
+        if (user?.id) {
+          socket.emit('user:offline', { userId: user.id });
+        }
+        await logout();
+        router.replace('/');
+      },
+    });
   };
 
   const isDriver = user?.role === 'DRIVER';

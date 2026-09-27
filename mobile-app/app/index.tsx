@@ -10,17 +10,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { authApi } from '../src/services/api';
 import { useMobileStore } from '../src/store/useMobileStore';
 import { getMobileSocket } from '../src/services/socket';
+import { useToast } from '../src/components/AppToast';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { setSession } = useMobileStore();
+  const { showToast } = useToast();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,11 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!identifier.trim() || !password.trim()) {
-      Alert.alert('Missing Fields', 'Please enter your Employee ID and password.');
+      showToast({
+        type: 'warning',
+        title: 'Missing Fields',
+        message: 'Please enter your Employee ID and password.',
+      });
       return;
     }
 
@@ -63,10 +68,18 @@ export default function LoginScreen() {
           router.replace('/(employee)/my-trips');
         }
       } else {
-        Alert.alert('Login Failed', res?.message || 'Invalid credentials. Please try again.');
+        showToast({
+          type: 'error',
+          title: 'Login Failed',
+          message: res?.message || 'Invalid credentials. Please try again.',
+        });
       }
     } catch (err) {
-      Alert.alert('Connection Error', 'Could not reach the server. Check your network.');
+      showToast({
+        type: 'error',
+        title: 'Connection Error',
+        message: 'Could not reach the server. Check your network.',
+      });
     } finally {
       setLoading(false);
     }

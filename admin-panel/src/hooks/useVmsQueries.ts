@@ -74,6 +74,14 @@ export function useEmployees(search?: string) {
   });
 }
 
+export function useAllUsers() {
+  return useQuery({
+    queryKey: ['users', 'ALL'],
+    queryFn:  () => api.getUsers('').then((r) => r.data ?? []),
+    staleTime: 60_000,
+  });
+}
+
 export function useFuelLogs(vehicleId?: string) {
   const param = vehicleId ? `?vehicleId=${vehicleId}` : '';
   return useQuery({

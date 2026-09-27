@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   ScrollView,
   RefreshControl,
@@ -22,10 +21,12 @@ import { getMobileSocket } from '../../src/services/socket';
 import { useMobileStore } from '../../src/store/useMobileStore';
 import { AppHeader } from '../../src/components/AppHeader';
 import { colors } from '../../src/theme/colors';
+import { useToast } from '../../src/components/AppToast';
 
 export default function ActiveTripScreen() {
   const router = useRouter();
   const { user } = useMobileStore();
+  const { showToast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -71,7 +72,11 @@ export default function ActiveTripScreen() {
 
     const { status: permStatus } = await Location.requestForegroundPermissionsAsync();
     if (permStatus !== 'granted') {
-      Alert.alert('Permission Denied', 'GPS location permission is needed to stream telemetry.');
+      showToast({
+        type: 'warning',
+        title: 'Permission Denied',
+        message: 'GPS location permission is needed to stream telemetry.',
+      });
       return;
     }
 
@@ -79,7 +84,11 @@ export default function ActiveTripScreen() {
     if (activeTrip.status !== 'IN_PROGRESS') {
       const res = await tripsApi.startTrip(activeTrip.id);
       if (!res.success) {
-        Alert.alert('Error', res.message || 'Failed to start trip.');
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: res.message || 'Failed to start trip.',
+        });
         return;
       }
     }
@@ -115,14 +124,22 @@ export default function ActiveTripScreen() {
     );
     setLocationWatcher(watcher);
 
-    Alert.alert('Journey Commenced', 'Live GPS coordinates are now streaming to the central Fleet map.');
+    showToast({
+      type: 'success',
+      title: 'Journey Commenced',
+      message: 'Live GPS coordinates are now streaming to the central Fleet map.',
+    });
   };
 
   const handleCompleteSubmit = async () => {
     if (!activeTrip) return;
     const odoNum = parseFloat(endOdometer);
     if (isNaN(odoNum) || odoNum <= 0) {
-      Alert.alert('Required', 'Please enter a valid ending odometer reading.');
+      showToast({
+        type: 'warning',
+        title: 'Required',
+        message: 'Please enter a valid ending odometer reading.',
+      });
       return;
     }
 
@@ -143,11 +160,19 @@ export default function ActiveTripScreen() {
     setShowCompleteModal(false);
 
     if (res.success) {
-      Alert.alert('Mission Accomplished', 'Trip finalized. Vehicle and driver status updated to Available.');
+      showToast({
+        type: 'success',
+        title: 'Mission Accomplished',
+        message: 'Trip finalized. Vehicle and driver status updated to Available.',
+      });
       setActiveTrip(null);
       fetchActiveTrip();
     } else {
-      Alert.alert('Error', res.message || 'Failed to complete trip.');
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: res.message || 'Failed to complete trip.',
+      });
     }
   };
 

@@ -7,7 +7,6 @@ import {
   ScrollView,
   FlatList,
   StyleSheet,
-  Alert,
   Image,
   ActivityIndicator,
   RefreshControl,
@@ -30,6 +29,7 @@ import {
 } from 'lucide-react-native';
 import { mobileApi, mobileChatApi } from '../../src/services/api';
 import { useMobileStore } from '../../src/store/useMobileStore';
+import { useToast } from '../../src/components/AppToast';
 
 
 // ─────────────────────────────────────────────
@@ -196,6 +196,7 @@ function SummaryBar({ logs }: { logs: FuelLogEntry[] }) {
 export default function FuelLogScreen() {
   const router = useRouter();
   const { user } = useMobileStore();
+  const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
 
@@ -243,7 +244,11 @@ export default function FuelLogScreen() {
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Camera access is required to photograph receipts.');
+      showToast({
+        type: 'warning',
+        title: 'Permission Required',
+        message: 'Camera access is required to photograph receipts.',
+      });
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.7 });
@@ -254,7 +259,11 @@ export default function FuelLogScreen() {
 
   const handleLogFuel = async () => {
     if (!odometer || !liters || !price) {
-      Alert.alert('Missing Fields', 'Please fill in Odometer, Fuel Added, and Price per litre.');
+      showToast({
+        type: 'warning',
+        title: 'Missing Fields',
+        message: 'Please fill in Odometer, Fuel Added, and Price per litre.',
+      });
       return;
     }
     setLoading(true);
@@ -282,24 +291,24 @@ export default function FuelLogScreen() {
 
     setLoading(false);
     if (res?.success) {
-      Alert.alert(
-        res.data?.isAnomaly ? 'Anomaly Detected' : 'Fuel Logged',
-        res.message || 'Fuel log submitted successfully.',
-        [
-          {
-            text: 'View History',
-            onPress: () => { setActiveTab('history'); fetchHistory(); },
-          },
-          { text: 'OK' },
-        ]
-      );
+      showToast({
+        type: res.data?.isAnomaly ? 'warning' : 'success',
+        title: res.data?.isAnomaly ? 'Anomaly Detected' : 'Fuel Logged',
+        message: res.message || 'Fuel log submitted successfully.',
+      });
       setOdometer('');
       setLiters('');
       setPrice('');
       setStation('');
       setReceiptImage(null);
+      setActiveTab('history');
+      fetchHistory();
     } else {
-      Alert.alert('Submission Error', res?.message || 'Could not log fuel receipt');
+      showToast({
+        type: 'error',
+        title: 'Submission Error',
+        message: res?.message || 'Could not log fuel receipt.',
+      });
     }
   };
 

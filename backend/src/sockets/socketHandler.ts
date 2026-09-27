@@ -39,6 +39,10 @@ export function initializeSockets(io: SocketIOServer) {
         role: data.role || 'EMPLOYEE',
         lastSeen: new Date(),
       });
+      socket.join(`user_${data.userId}`);
+      if (data.role) {
+        socket.join(`role_${data.role}`);
+      }
       console.log(`[WebSocket] User online: ${data.name} (${data.userId})`);
       io.emit('presence:sync', { onlineUserIds: getOnlineUserIds() });
     });

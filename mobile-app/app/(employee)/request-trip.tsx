@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -23,6 +22,7 @@ import {
   RefreshCw,
 } from 'lucide-react-native';
 import { tripsApi, authApi } from '../../src/services/api';
+import { useToast } from '../../src/components/AppToast';
 
 const TRIP_TYPES = [
   { key: 'ONE_WAY', label: 'One Way', icon: ArrowRight },
@@ -41,6 +41,7 @@ interface Passenger {
 
 export default function RequestTripScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [submitting, setSubmitting] = useState(false);
 
   // Location fields
@@ -95,10 +96,22 @@ export default function RequestTripScreen() {
   };
 
   const validate = () => {
-    if (!pickupAddress.trim()) { Alert.alert('Required', 'Enter pickup location.'); return false; }
-    if (!dropoffAddress.trim()) { Alert.alert('Required', 'Enter destination/dropoff location.'); return false; }
-    if (!purpose.trim()) { Alert.alert('Required', 'Enter the purpose of your trip.'); return false; }
-    if (!departureDate.trim()) { Alert.alert('Required', 'Enter departure date (DD/MM/YYYY).'); return false; }
+    if (!pickupAddress.trim()) {
+      showToast({ type: 'warning', title: 'Required', message: 'Enter pickup location.' });
+      return false;
+    }
+    if (!dropoffAddress.trim()) {
+      showToast({ type: 'warning', title: 'Required', message: 'Enter destination/dropoff location.' });
+      return false;
+    }
+    if (!purpose.trim()) {
+      showToast({ type: 'warning', title: 'Required', message: 'Enter the purpose of your trip.' });
+      return false;
+    }
+    if (!departureDate.trim()) {
+      showToast({ type: 'warning', title: 'Required', message: 'Enter departure date (DD/MM/YYYY).' });
+      return false;
+    }
     return true;
   };
 
@@ -112,7 +125,7 @@ export default function RequestTripScreen() {
       departureAt = new Date(year, month - 1, day, hh, mm);
       if (isNaN(departureAt.getTime())) throw new Error();
     } catch {
-      Alert.alert('Invalid Date', 'Use format DD/MM/YYYY and time HH:MM');
+      showToast({ type: 'error', title: 'Invalid Date', message: 'Use format DD/MM/YYYY and time HH:MM' });
       return;
     }
 
@@ -135,13 +148,18 @@ export default function RequestTripScreen() {
 
     setSubmitting(false);
     if (res.success) {
-      Alert.alert(
-        'Requisition Submitted',
-        'Your vehicle request has been sent to the Fleet Manager for approval.',
-        [{ text: 'View My Trips', onPress: () => router.replace('/(employee)/my-trips') }]
-      );
+      showToast({
+        type: 'success',
+        title: 'Requisition Submitted',
+        message: 'Your vehicle request has been sent to the Fleet Manager for approval.',
+      });
+      router.replace('/(employee)/my-trips');
     } else {
-      Alert.alert('Error', res.message || 'Failed to submit. Please try again.');
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: res.message || 'Failed to submit. Please try again.',
+      });
     }
   };
 
