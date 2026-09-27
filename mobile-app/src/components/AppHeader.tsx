@@ -47,14 +47,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
   return (
     <View style={styles.wrapper}>
       {/* Top Profile & Actions Row */}
+      {/* Top Profile & Actions Row */}
       <View style={styles.topRow}>
         <View style={styles.userInfo}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{user?.name?.charAt(0) || 'U'}</Text>
           </View>
-          <View>
+          <View style={styles.userTextCol}>
             <View style={styles.nameRow}>
-              <Text style={styles.userName} numberOfLines={1}>
+              <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
                 {user?.name || (isDriver ? 'Driver' : 'Employee')}
               </Text>
               {user?.employeeId && (
@@ -63,7 +64,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
                 </View>
               )}
             </View>
-            <Text style={styles.userRole}>
+            <Text style={styles.userRole} numberOfLines={1} ellipsizeMode="tail">
               {isDriver ? 'Fleet Driver · Active Duty' : user?.department || 'Corporate Employee'}
             </Text>
           </View>
@@ -106,9 +107,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
           </TouchableOpacity>
 
           {/* Sign Out */}
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <LogOut size={13} color="#F14141" style={{ marginRight: 3 }} />
-            <Text style={styles.logoutText}>Exit</Text>
+          <TouchableOpacity
+            style={styles.logoutBtn}
+            onPress={handleLogout}
+            accessibilityLabel="Sign Out"
+          >
+            <LogOut size={16} color="#F14141" />
           </TouchableOpacity>
         </View>
       </View>
@@ -270,6 +274,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     flex: 1,
+    minWidth: 0,
   },
   avatar: {
     width: 38,
@@ -278,11 +283,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#2B7FFF',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   avatarText: {
     color: '#fff',
     fontWeight: '800',
     fontSize: 16,
+  },
+  userTextCol: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
   },
   nameRow: {
     flexDirection: 'row',
@@ -293,7 +304,7 @@ const styles = StyleSheet.create({
     color: '#171717',
     fontWeight: '800',
     fontSize: 14,
-    maxWidth: 140,
+    flexShrink: 1,
   },
   idBadge: {
     backgroundColor: '#EFF6FF',
@@ -302,6 +313,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#BEDBFF',
+    flexShrink: 0,
   },
   idBadgeText: {
     color: '#2B7FFF',
@@ -317,7 +329,8 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
+    flexShrink: 0,
   },
   iconBtn: {
     width: 36,
@@ -364,19 +377,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   logoutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
-    backgroundColor: '#FEE2E2',
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
-    borderColor: '#FCA5A5',
-  },
-  logoutText: {
-    color: '#F14141',
-    fontSize: 11,
-    fontWeight: '700',
+    borderColor: '#FECACA',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   titleRow: {
     paddingHorizontal: 16,

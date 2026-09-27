@@ -120,7 +120,8 @@ export default function RequestTripScreen() {
 
     let departureAt: Date;
     try {
-      const [day, month, year] = departureDate.split('/').map(Number);
+      let [day, month, year] = departureDate.split('/').map(Number);
+      if (year < 100) year += 2000;
       const [hh, mm] = (departureTime || '08:00').split(':').map(Number);
       departureAt = new Date(year, month - 1, day, hh, mm);
       if (isNaN(departureAt.getTime())) throw new Error();
