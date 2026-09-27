@@ -97,79 +97,91 @@ export default function DriverTripsScreen() {
         </View>
 
         {/* Purpose */}
-        <Text style={styles.purpose} numberOfLines={2}>
-          "{item.purpose}"
-        </Text>
+        {item.purpose ? (
+          <Text style={styles.purpose} numberOfLines={2}>
+            {`"${item.purpose}"`}
+          </Text>
+        ) : null}
 
         {/* Vehicle Info */}
-        {item.vehicle && (
+        {item.vehicle ? (
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Assigned Vehicle:</Text>
-            <Text style={styles.detailValue} numberOfLines={1} ellipsizeMode="tail">
-              <Car size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
-            {item.vehicle.make} {item.vehicle.model}
-            </Text>
-            <View style={styles.regPill}>
-              <Text style={styles.regText} numberOfLines={1} ellipsizeMode="tail">
-                {item.vehicle.registrationNo}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Car size={13} color={colors.textSecondary} />
+              <Text style={styles.detailValue} numberOfLines={1} ellipsizeMode="tail">
+                {item.vehicle.make} {item.vehicle.model}
+              </Text>
+            </View>
+            {item.vehicle.registrationNo ? (
+              <View style={styles.regPill}>
+                <Text style={styles.regText} numberOfLines={1} ellipsizeMode="tail">
+                  {item.vehicle.registrationNo}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* Requester */}
+        {item.requester ? (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Passenger / Dept:</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <User size={12} color={colors.textSecondary} />
+              <Text style={styles.detailValue} numberOfLines={1} ellipsizeMode="tail">
+                {item.requester.name} {item.requester.phone ? `(${item.requester.phone})` : ''}
               </Text>
             </View>
           </View>
-        )}
-
-        {/* Requester */}
-        {item.requester && (
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Passenger / Dept:</Text>
-            <Text style={styles.detailValue} numberOfLines={1} ellipsizeMode="tail">
-              <User size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
-              {item.requester.name} {item.requester.phone ? `(${item.requester.phone})` : ''}
-            </Text>
-          </View>
-        )}
+        ) : null}
 
         {/* Colleagues */}
-        {item.passengers && item.passengers.length > 0 && (
+        {item.passengers && item.passengers.length > 0 ? (
           <View style={styles.passengerRow}>
             <Text style={styles.detailLabel}>Accompanying Colleagues:</Text>
             <View style={styles.passengerTags}>
               {item.passengers.map((p: any) => (
                 <View key={p.id || p.employeeId || p.name} style={styles.passengerTag}>
                   <Text style={styles.passengerTagText}>
-                    {p.name} {p.employeeId ? `(${p.employeeId})` : ''}
+                    {p.name}{p.employeeId ? ` (${p.employeeId})` : ''}
                   </Text>
                 </View>
               ))}
             </View>
           </View>
-        )}
+        ) : null}
 
         {/* Completed distance info */}
-        {item.status === 'COMPLETED' && item.distanceCovered && (
+        {item.status === 'COMPLETED' && item.distanceCovered ? (
           <View style={styles.distanceBox}>
-            <Text style={styles.distanceText}>
-              <Ruler size={13} color={colors.primary} style={{ marginRight: 4 }} />
-              {item.distanceCovered} km  (Odo: {item.startOdometer} → {item.endOdometer})
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Ruler size={13} color={colors.primary} />
+              <Text style={styles.distanceText}>
+                {item.distanceCovered} km (Odo: {item.startOdometer} → {item.endOdometer})
+              </Text>
+            </View>
           </View>
-        )}
+        ) : null}
 
         {/* Action Button for Active / Upcoming Trips */}
-        {isActionable && (
+        {isActionable ? (
           <TouchableOpacity
             style={styles.actionBtn}
             onPress={() => router.push('/(driver)/active-trip')}
           >
             <View style={styles.actionBtnInner}>
-              {item.status === 'IN_PROGRESS'
-                ? <Wifi size={16} color="#fff" />
-                : <Zap size={16} color="#fff" />}
+              {item.status === 'IN_PROGRESS' ? (
+                <Wifi size={16} color="#fff" />
+              ) : (
+                <Zap size={16} color="#fff" />
+              )}
               <Text style={styles.actionBtnText}>
                 {item.status === 'IN_PROGRESS' ? 'Return to Live GPS Console' : 'Open Duty Console'}
               </Text>
             </View>
           </TouchableOpacity>
-        )}
+        ) : null}
       </View>
     );
   };
