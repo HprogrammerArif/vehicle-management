@@ -75,14 +75,15 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <AuthGuard />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: '#0f172a' },
-          headerTintColor: '#f8fafc',
-          headerTitleStyle: { fontWeight: 'bold' },
-          contentStyle: { backgroundColor: '#020617' },
+          headerStyle: { backgroundColor: '#ffffff' },
+          headerTintColor: '#171717',
+          headerTitleStyle: { fontWeight: '700', fontSize: 17 },
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: '#F8FAFC' },
         }}
       >
         {/* Auth */}

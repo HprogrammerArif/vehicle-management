@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { notificationsApi } from '../../src/services/api';
 import { useMobileStore } from '../../src/store/useMobileStore';
+import { colors } from '../../src/theme/colors';
 
 const TYPE_ICON: Record<string, string> = {
   TRIP_APPROVED:  '✅',
@@ -99,7 +100,7 @@ export default function NotificationsScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#6366f1" size="large" />
+          <ActivityIndicator color={colors.primary} size="large" />
         </View>
       ) : notifications.length === 0 ? (
         <View style={styles.center}>
@@ -114,7 +115,7 @@ export default function NotificationsScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           showsVerticalScrollIndicator={false}
         />
@@ -124,62 +125,72 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#020617' },
+  container: { flex: 1, backgroundColor: colors.background },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 20,
-    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#0f172a',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  screenTitle: { fontSize: 20, fontWeight: '800', color: '#f8fafc' },
-  unreadCount: { fontSize: 12, color: '#f59e0b', marginTop: 2 },
+  screenTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+  unreadCount: { fontSize: 12, color: colors.warning, fontWeight: '600', marginTop: 2 },
   markAllBtn: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
   },
-  markAllText: { fontSize: 12, color: '#94a3b8', fontWeight: '600' },
+  markAllText: { fontSize: 12, color: colors.primary, fontWeight: '700' },
   list: { padding: 16, gap: 10 },
   card: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'flex-start',
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   cardUnread: {
-    borderColor: '#312e81',
-    backgroundColor: '#0e0c2e',
+    borderColor: colors.primaryBorder,
+    backgroundColor: '#F0F7FF',
   },
   iconWrap: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: 12,
-    backgroundColor: '#1e1b4b',
+    backgroundColor: colors.primaryTint,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  icon: { fontSize: 18 },
+  icon: { fontSize: 20 },
   content: { flex: 1, gap: 3 },
-  title: { fontSize: 14, fontWeight: '700', color: '#f8fafc' },
-  body: { fontSize: 12, color: '#94a3b8', lineHeight: 18 },
-  time: { fontSize: 11, color: '#475569', marginTop: 4 },
+  title: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  body: { fontSize: 12, color: colors.textSecondary, lineHeight: 18 },
+  time: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#818cf8',
+    backgroundColor: colors.primary,
     marginTop: 4,
   },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#f8fafc' },
-  emptyDesc: { fontSize: 13, color: '#64748b' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  emptyDesc: { fontSize: 13, color: colors.textMuted },
 });

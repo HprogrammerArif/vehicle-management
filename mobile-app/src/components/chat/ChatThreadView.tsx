@@ -30,6 +30,7 @@ import {
 import { mobileChatApi } from '../../services/api';
 import { getMobileSocket } from '../../services/socket';
 import { useMobileStore } from '../../store/useMobileStore';
+import { colors } from '../../theme/colors';
 
 interface ChatThreadViewProps {
   conversationId: string;
@@ -39,11 +40,11 @@ interface ChatThreadViewProps {
 const getRoleColor = (role: string = 'EMPLOYEE') => {
   switch (role) {
     case 'ADMIN':
-      return { bg: '#4338ca', badge: '#3b82f6', label: 'HQ DISPATCH' };
+      return { bg: colors.pastelBlue, badge: colors.primary, text: '#ffffff', label: 'HQ DISPATCH' };
     case 'DRIVER':
-      return { bg: '#047857', badge: '#10b981', label: 'FLEET PILOT' };
+      return { bg: colors.pastelGreen, badge: colors.success, text: '#ffffff', label: 'FLEET PILOT' };
     default:
-      return { bg: '#0e7490', badge: '#06b6d4', label: 'PASSENGER' };
+      return { bg: colors.pastelIndigo, badge: '#4F46E5', text: '#ffffff', label: 'PASSENGER' };
   }
 };
 
@@ -318,7 +319,7 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
       <View style={[styles.messageRow, isMe ? styles.myMessageRow : styles.otherMessageRow]}>
         {!isMe && (
           <View style={[styles.avatarCircle, { backgroundColor: roleStyle.bg }]}>
-            <Text style={styles.avatarText}>{senderInitial}</Text>
+            <Text style={[styles.avatarText, { color: roleStyle.badge }]}>{senderInitial}</Text>
           </View>
         )}
 
@@ -326,7 +327,7 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
           {!isMe && (
             <View style={styles.senderHeader}>
               <Text style={styles.senderName}>{item.sender?.name || 'Fleet Dispatch'}</Text>
-              <Text style={[styles.senderRole, { backgroundColor: roleStyle.badge }]}>
+              <Text style={[styles.senderRole, { backgroundColor: roleStyle.bg, color: roleStyle.badge }]}>
                 {roleStyle.label}
               </Text>
             </View>
@@ -346,7 +347,7 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
           {/* Location card */}
           {isLocation && (
             <View style={styles.locationCard}>
-              <MapPin size={16} color="#10b981" />
+              <MapPin size={16} color={colors.success} />
               <Text style={styles.locationCardText}>GPS Coordinates Shared</Text>
             </View>
           )}
@@ -360,7 +361,7 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
               {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
             {isMe && (
-              <CheckCheck size={13} color="#93c5fd" style={{ marginLeft: 4 }} />
+              <CheckCheck size={13} color="#C7D2FE" style={{ marginLeft: 4 }} />
             )}
           </View>
         </View>
@@ -377,7 +378,7 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
       {/* Top Header Bar */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={20} color="#f8fafc" />
+          <ArrowLeft size={20} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle} numberOfLines={1}>
@@ -389,10 +390,10 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
                 width: 7,
                 height: 7,
                 borderRadius: 4,
-                backgroundColor: isDispatchOnline ? '#10b981' : '#64748b',
+                backgroundColor: isDispatchOnline ? colors.success : colors.textMuted,
               }}
             />
-            <Text style={[styles.headerSubtitle, { color: isDispatchOnline ? '#10b981' : '#94a3b8' }]}>
+            <Text style={[styles.headerSubtitle, { color: isDispatchOnline ? colors.success : colors.textMuted }]}>
               {conversation?.isResolved
                 ? 'Resolved'
                 : isDispatchOnline
@@ -406,7 +407,7 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
       {/* Linked Trip Banner (if available) */}
       {conversation?.trip && (
         <View style={styles.tripBanner}>
-          <Truck size={16} color="#6366f1" />
+          <Truck size={16} color={colors.primary} />
           <View style={styles.tripBannerText}>
             <Text style={styles.tripBannerRoute}>
               {conversation.trip.fromOffice?.name || 'HQ'} &rarr; {conversation.trip.toOffice?.name || 'Plant'}
@@ -421,7 +422,7 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
       {/* Messages List */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#6366f1" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <FlatList
@@ -434,7 +435,9 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Clock size={36} color="#475569" />
+              <View style={styles.emptyIconCircle}>
+                <Clock size={32} color={colors.primary} />
+              </View>
               <Text style={styles.emptyTitle}>Ready for dispatch</Text>
               <Text style={styles.emptyDesc}>
                 This thread connects you directly to the central fleet management team with live telemetry.
@@ -481,9 +484,9 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
           activeOpacity={0.7}
         >
           {isUploading ? (
-            <ActivityIndicator size="small" color="#818cf8" />
+            <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <Camera size={19} color="#94a3b8" />
+            <Camera size={19} color={colors.textSecondary} />
           )}
         </TouchableOpacity>
 
@@ -494,13 +497,13 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
           disabled={isUploading}
           activeOpacity={0.7}
         >
-          <MapPin size={19} color="#10b981" />
+          <MapPin size={19} color={colors.success} />
         </TouchableOpacity>
 
         <TextInput
           style={styles.textInput}
           placeholder="Message Dispatch..."
-          placeholderTextColor="#64748b"
+          placeholderTextColor={colors.textMuted}
           value={text}
           onChangeText={handleTextChange}
           multiline
@@ -521,16 +524,16 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#020617',
+    backgroundColor: colors.background,
   },
   header: {
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.border,
   },
   backButton: {
     padding: 6,
@@ -542,11 +545,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
   },
   headerSubtitle: {
     fontSize: 11,
-    color: '#10b981',
+    fontWeight: '600',
     marginTop: 1,
   },
   tripBanner: {
@@ -554,9 +557,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#1e1b4b',
+    backgroundColor: colors.primaryTint,
     borderBottomWidth: 1,
-    borderBottomColor: '#312e81',
+    borderBottomColor: colors.primaryBorder,
     gap: 12,
   },
   tripBannerText: {
@@ -564,12 +567,13 @@ const styles = StyleSheet.create({
   },
   tripBannerRoute: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#e0e7ff',
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
   tripBannerMeta: {
     fontSize: 11,
-    color: '#a5b4fc',
+    fontWeight: '600',
+    color: colors.primary,
     marginTop: 1,
   },
   loadingContainer: {
@@ -599,14 +603,19 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   myBubble: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: colors.primary,
     borderBottomRightRadius: 4,
   },
   otherBubble: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   senderHeader: {
     flexDirection: 'row',
@@ -617,16 +626,15 @@ const styles = StyleSheet.create({
   senderName: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#93c5fd',
+    color: colors.textPrimary,
   },
   senderRole: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#e2e8f0',
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 3,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   messageBody: {
     fontSize: 14,
@@ -636,7 +644,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   otherMessageText: {
-    color: '#f1f5f9',
+    color: colors.textPrimary,
   },
   messageFooter: {
     flexDirection: 'row',
@@ -648,18 +656,18 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   myTimeText: {
-    color: '#c7d2fe',
+    color: '#E0E7FF',
   },
   otherTimeText: {
-    color: '#94a3b8',
+    color: colors.textMuted,
   },
   systemMessageContainer: {
     alignItems: 'center',
     marginVertical: 10,
   },
   systemBadge: {
-    backgroundColor: '#0f172a',
-    borderColor: '#1e293b',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -668,116 +676,128 @@ const styles = StyleSheet.create({
   },
   systemText: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   systemTime: {
     fontSize: 9,
-    color: '#64748b',
+    color: colors.textMuted,
     marginTop: 2,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 80,
-    gap: 8,
+    gap: 10,
+  },
+  emptyIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.primaryTint,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyTitle: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#cbd5e1',
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
   emptyDesc: {
     fontSize: 12,
-    color: '#64748b',
+    color: colors.textMuted,
     textAlign: 'center',
     paddingHorizontal: 32,
   },
   typingBar: {
     paddingHorizontal: 16,
     paddingVertical: 4,
-    backgroundColor: '#020617',
+    backgroundColor: colors.background,
   },
   typingText: {
     fontSize: 11,
-    color: '#818cf8',
+    color: colors.primary,
     fontStyle: 'italic',
   },
   templateScroll: {
-    paddingVertical: 6,
-    backgroundColor: '#090d16',
+    paddingVertical: 8,
+    backgroundColor: colors.surfaceSubtle,
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: colors.border,
   },
   templateChip: {
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
   },
   templateChipText: {
     fontSize: 12,
-    color: '#cbd5e1',
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: colors.border,
     gap: 8,
   },
   textInput: {
     flex: 1,
     maxHeight: 100,
     minHeight: 40,
-    backgroundColor: '#020617',
-    borderColor: '#334155',
+    backgroundColor: colors.surfaceSubtle,
+    borderColor: colors.border,
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    color: '#ffffff',
+    color: colors.textPrimary,
     fontSize: 14,
   },
   sendButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#4f46e5',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#334155',
+    backgroundColor: colors.border,
     opacity: 0.6,
   },
   avatarCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
     marginBottom: 4,
     alignSelf: 'flex-end',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   avatarText: {
-    color: '#ffffff',
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   mediaButton: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surfaceSubtle,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -795,15 +815,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#064e3b',
+    backgroundColor: colors.pastelGreen,
+    borderWidth: 1,
+    borderColor: colors.pastelGreenBorder,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
     marginBottom: 6,
   },
   locationCardText: {
-    color: '#34d399',
+    color: colors.success,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

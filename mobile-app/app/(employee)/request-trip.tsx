@@ -144,7 +144,7 @@ export default function RequestTripScreen() {
         <TextInput
           style={styles.input}
           placeholder="Enter full pickup address (e.g. Gulshan-1, Dhaka)"
-          placeholderTextColor="#475569"
+          placeholderTextColor="#94a3b8"
           value={pickupAddress}
           onChangeText={setPickupAddress}
           multiline
@@ -157,7 +157,7 @@ export default function RequestTripScreen() {
         <TextInput
           style={styles.input}
           placeholder="Enter full destination (e.g. Karnaphuli EPZ, Chittagong)"
-          placeholderTextColor="#475569"
+          placeholderTextColor="#94a3b8"
           value={dropoffAddress}
           onChangeText={setDropoffAddress}
           multiline
@@ -190,7 +190,7 @@ export default function RequestTripScreen() {
             <TextInput
               style={styles.input}
               placeholder="DD/MM/YYYY"
-              placeholderTextColor="#475569"
+              placeholderTextColor="#94a3b8"
               value={departureDate}
               onChangeText={setDepartureDate}
               keyboardType="numeric"
@@ -200,7 +200,7 @@ export default function RequestTripScreen() {
             <TextInput
               style={styles.input}
               placeholder="HH:MM"
-              placeholderTextColor="#475569"
+              placeholderTextColor="#94a3b8"
               value={departureTime}
               onChangeText={setDepartureTime}
               keyboardType="numeric"
@@ -217,7 +217,7 @@ export default function RequestTripScreen() {
           multiline
           numberOfLines={3}
           placeholder="e.g. Factory inspection and vendor meeting at Chattogram unit"
-          placeholderTextColor="#475569"
+          placeholderTextColor="#94a3b8"
           value={purpose}
           onChangeText={setPurpose}
         />
@@ -257,7 +257,7 @@ export default function RequestTripScreen() {
           <TextInput
             style={[styles.input, styles.searchInput]}
             placeholder="Enter Employee ID (e.g. EMP-109)"
-            placeholderTextColor="#475569"
+            placeholderTextColor="#94a3b8"
             value={searchId}
             onChangeText={(t) => {
               setSearchId(t);
@@ -327,26 +327,26 @@ export default function RequestTripScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#020617' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   content: { padding: 20, gap: 20, paddingBottom: 50 },
-  title: { fontSize: 22, fontWeight: '800', color: '#ffffff' },
-  subtitle: { fontSize: 12, color: '#64748b', marginBottom: 4, marginTop: -8 },
+  title: { fontSize: 22, fontWeight: '800', color: '#171717' },
+  subtitle: { fontSize: 13, color: '#525252', marginBottom: 4, marginTop: -8 },
 
   section: { gap: 8 },
   sectionLabel: {
-    fontSize: 11, fontWeight: '700', color: '#475569',
+    fontSize: 11, fontWeight: '700', color: '#525252',
     textTransform: 'uppercase', letterSpacing: 0.8,
   },
-  sectionHint: { fontSize: 11, color: '#334155', marginTop: -4 },
+  sectionHint: { fontSize: 11, color: '#878787', marginTop: -4 },
 
   input: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 14,
-    color: '#f8fafc',
+    color: '#171717',
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E2E8F0',
   },
   textArea: { minHeight: 88, textAlignVertical: 'top' },
   row: { flexDirection: 'row', gap: 10 },
@@ -354,76 +354,81 @@ const styles = StyleSheet.create({
   typeRow: { gap: 8 },
   typeChip: {
     paddingHorizontal: 14, paddingVertical: 10,
-    borderRadius: 10, backgroundColor: '#0f172a',
-    borderWidth: 1, borderColor: '#1e293b',
+    borderRadius: 10, backgroundColor: '#ffffff',
+    borderWidth: 1, borderColor: '#E2E8F0',
   },
-  typeChipSelected: { backgroundColor: '#1e1b4b', borderColor: '#4f46e5' },
-  typeChipText: { fontSize: 13, color: '#64748b' },
-  typeChipTextSelected: { color: '#a5b4fc', fontWeight: '700' },
+  typeChipSelected: { backgroundColor: '#EFF6FF', borderColor: '#2B7FFF' },
+  typeChipText: { fontSize: 13, color: '#525252' },
+  typeChipTextSelected: { color: '#2B7FFF', fontWeight: '700' },
 
   // Passenger list
   passengerList: { gap: 8 },
   passengerCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#0c1520', borderRadius: 12, padding: 12,
-    borderWidth: 1, borderColor: '#1e3a5f', gap: 12,
+    backgroundColor: '#ffffff', borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: '#E2E8F0', gap: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03, elevation: 1,
   },
   passengerAvatar: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#1e3a5f', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
   },
-  passengerAvatarText: { color: '#38bdf8', fontWeight: '800', fontSize: 16 },
+  passengerAvatarText: { color: '#2B7FFF', fontWeight: '800', fontSize: 16 },
   passengerInfo: { flex: 1, gap: 2 },
-  passengerName: { fontSize: 14, fontWeight: '700', color: '#f8fafc' },
-  passengerMeta: { fontSize: 11, color: '#64748b' },
-  passengerPhone: { fontSize: 11, color: '#475569' },
+  passengerName: { fontSize: 14, fontWeight: '700', color: '#171717' },
+  passengerMeta: { fontSize: 11, color: '#525252' },
+  passengerPhone: { fontSize: 11, color: '#878787' },
   removeBtn: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#1c0a0a', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#FEE2E2', justifyContent: 'center', alignItems: 'center',
   },
-  removeText: { color: '#f87171', fontSize: 12, fontWeight: '700' },
+  removeText: { color: '#F14141', fontSize: 12, fontWeight: '700' },
 
   // Search
   searchRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   searchInput: { flex: 1 },
   searchBtn: {
-    backgroundColor: '#1e40af', borderRadius: 12,
+    backgroundColor: '#2B7FFF', borderRadius: 12,
     paddingHorizontal: 16, paddingVertical: 14,
     justifyContent: 'center', alignItems: 'center',
   },
   searchBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
   searchError: {
-    backgroundColor: '#1c0a0a', borderRadius: 10,
-    padding: 10, borderWidth: 1, borderColor: '#7f1d1d',
+    backgroundColor: '#FEE2E2', borderRadius: 10,
+    padding: 10, borderWidth: 1, borderColor: '#FCA5A5',
   },
-  searchErrorText: { color: '#f87171', fontSize: 12 },
+  searchErrorText: { color: '#F14141', fontSize: 12, fontWeight: '600' },
 
   resultCard: {
-    backgroundColor: '#0a1628', borderRadius: 14,
-    padding: 14, borderWidth: 1, borderColor: '#1d4ed8',
+    backgroundColor: '#ffffff', borderRadius: 14,
+    padding: 14, borderWidth: 1, borderColor: '#BEDBFF',
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    shadowColor: '#2B7FFF', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06, elevation: 2,
   },
   resultLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   resultAvatar: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#1e3a8a', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
   },
-  resultAvatarText: { color: '#60a5fa', fontWeight: '800', fontSize: 18 },
-  resultName: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
-  resultMeta: { fontSize: 11, color: '#64748b', marginTop: 2 },
-  resultEmail: { fontSize: 11, color: '#475569', marginTop: 1 },
+  resultAvatarText: { color: '#2B7FFF', fontWeight: '800', fontSize: 18 },
+  resultName: { fontSize: 15, fontWeight: '700', color: '#171717' },
+  resultMeta: { fontSize: 11, color: '#525252', marginTop: 2 },
+  resultEmail: { fontSize: 11, color: '#878787', marginTop: 1 },
   addBtn: {
-    backgroundColor: '#166534', borderRadius: 10,
+    backgroundColor: '#DCFCE7', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 8,
+    borderWidth: 1, borderColor: '#BBF7D0',
   },
-  addBtnText: { color: '#4ade80', fontWeight: '700', fontSize: 13 },
+  addBtnText: { color: '#2F9B65', fontWeight: '700', fontSize: 13 },
 
   submitBtn: {
-    backgroundColor: '#4f46e5', borderRadius: 14,
+    backgroundColor: '#2B7FFF', borderRadius: 14,
     paddingVertical: 16, alignItems: 'center',
-    shadowColor: '#4f46e5', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4, shadowRadius: 10, elevation: 8,
+    shadowColor: '#2B7FFF', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
   },
   submitBtnDisabled: { opacity: 0.6 },
   submitText: { color: '#fff', fontWeight: '700', fontSize: 15 },

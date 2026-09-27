@@ -13,13 +13,7 @@ import { tripsApi } from '../../src/services/api';
 import { useMobileStore } from '../../src/store/useMobileStore';
 import { AppHeader } from '../../src/components/AppHeader';
 
-const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  PENDING:     { bg: '#1c1917', text: '#f59e0b', label: 'Pending Review' },
-  APPROVED:    { bg: '#052e16', text: '#4ade80', label: 'Assigned / Ready' },
-  IN_PROGRESS: { bg: '#0c1a2e', text: '#38bdf8', label: 'In Progress 🚀' },
-  COMPLETED:   { bg: '#0a0a1a', text: '#818cf8', label: 'Completed 🏁' },
-  CANCELLED:   { bg: '#1a1a1a', text: '#64748b', label: 'Cancelled' },
-};
+import { statusColors, colors } from '../../src/theme/colors';
 
 export default function DriverTripsScreen() {
   const router = useRouter();
@@ -58,7 +52,7 @@ export default function DriverTripsScreen() {
   });
 
   const renderTrip = ({ item }: { item: any }) => {
-    const s = STATUS_COLORS[item.status] || STATUS_COLORS.CANCELLED;
+    const s = statusColors[item.status] || statusColors.CANCELLED;
     const dept = new Date(item.departureAt);
     const fromLoc = item.fromOffice?.name || item.pickupAddress || 'Origin';
     const toLoc = item.toOffice?.name || item.dropoffAddress || 'Destination';
@@ -70,12 +64,12 @@ export default function DriverTripsScreen() {
         {/* Card Header */}
         <View style={styles.cardHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={[styles.badge, { backgroundColor: s.bg }]}>
+            <View style={[styles.badge, { backgroundColor: s.bg, borderColor: s.border, borderWidth: 1 }]}>
               <Text style={[styles.badgeText, { color: s.text }]}>{s.label}</Text>
             </View>
             {isCustom && (
-              <View style={[styles.badge, { backgroundColor: '#1e1b4b' }]}>
-                <Text style={[styles.badgeText, { color: '#a5b4fc', fontSize: 10 }]}>
+              <View style={[styles.badge, { backgroundColor: '#EFF6FF', borderColor: '#BEDBFF', borderWidth: 1 }]}>
+                <Text style={[styles.badgeText, { color: '#2B7FFF', fontSize: 10 }]}>
                   📍 Custom Location
                 </Text>
               </View>
@@ -189,7 +183,7 @@ export default function DriverTripsScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#6366f1" size="large" />
+          <ActivityIndicator color={colors.primary} size="large" />
           <Text style={styles.loadingText}>Loading assigned trips…</Text>
         </View>
       ) : filteredTrips.length === 0 ? (
@@ -209,7 +203,7 @@ export default function DriverTripsScreen() {
           renderItem={renderTrip}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           showsVerticalScrollIndicator={false}
         />
@@ -219,28 +213,31 @@ export default function DriverTripsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#020617' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   filterStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: '#E2E8F0',
   },
   filterBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   filterBtnActive: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#2B7FFF',
+    borderColor: '#2B7FFF',
   },
   filterBtnText: {
-    color: '#94a3b8',
+    color: '#525252',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -250,53 +247,65 @@ const styles = StyleSheet.create({
   },
   list: { padding: 16, gap: 12 },
   card: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E2E8F0',
     gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   badgeText: { fontSize: 11, fontWeight: '700' },
-  date: { fontSize: 11, color: '#475569' },
+  date: { fontSize: 11, color: '#878787', fontWeight: '500' },
   route: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  routeFrom: { fontSize: 13, color: '#94a3b8', flex: 1 },
-  routeArrow: { fontSize: 12, color: '#334155' },
-  routeTo: { fontSize: 13, color: '#94a3b8', flex: 1, textAlign: 'right' },
-  purpose: { fontSize: 13, color: '#f8fafc', fontWeight: '500', lineHeight: 18 },
+  routeFrom: { fontSize: 13, color: '#171717', fontWeight: '600', flex: 1 },
+  routeArrow: { fontSize: 12, color: '#2B7FFF', fontWeight: '700' },
+  routeTo: { fontSize: 13, color: '#171717', fontWeight: '600', flex: 1, textAlign: 'right' },
+  purpose: { fontSize: 13, color: '#262626', fontWeight: '500', lineHeight: 18 },
   detailRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  detailLabel: { fontSize: 10, color: '#64748b', fontWeight: '700', textTransform: 'uppercase' },
-  detailValue: { fontSize: 12, color: '#cbd5e1', fontWeight: '600' },
+  detailLabel: { fontSize: 10, color: '#878787', fontWeight: '700', textTransform: 'uppercase' },
+  detailValue: { fontSize: 12, color: '#171717', fontWeight: '600' },
   passengerRow: { gap: 4 },
   passengerTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   passengerTag: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
-  },
-  passengerTagText: { fontSize: 11, color: '#94a3b8' },
-  distanceBox: {
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.2)',
+    borderColor: '#E2E8F0',
+  },
+  passengerTagText: { fontSize: 11, color: '#525252' },
+  distanceBox: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BEDBFF',
     padding: 8,
     borderRadius: 8,
   },
-  distanceText: { color: '#a5b4fc', fontSize: 11, fontWeight: '600' },
+  distanceText: { color: '#2B7FFF', fontSize: 11, fontWeight: '700' },
   actionBtn: {
-    backgroundColor: '#4f46e5',
-    paddingVertical: 10,
-    borderRadius: 10,
+    backgroundColor: '#2B7FFF',
+    paddingVertical: 11,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 4,
+    shadowColor: '#2B7FFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  actionBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  actionBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, padding: 20 },
-  loadingText: { color: '#475569', fontSize: 13, marginTop: 8 },
+  loadingText: { color: '#878787', fontSize: 13, marginTop: 8 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#f8fafc' },
-  emptyDesc: { fontSize: 13, color: '#64748b', textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#171717' },
+  emptyDesc: { fontSize: 13, color: '#525252', textAlign: 'center' },
 });

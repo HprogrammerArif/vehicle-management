@@ -13,14 +13,7 @@ import { tripsApi } from '../../src/services/api';
 import { useMobileStore } from '../../src/store/useMobileStore';
 import { AppHeader } from '../../src/components/AppHeader';
 
-const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  PENDING:     { bg: '#1c1917', text: '#f59e0b', label: 'Pending Review' },
-  APPROVED:    { bg: '#052e16', text: '#4ade80', label: 'Approved' },
-  REJECTED:    { bg: '#1c0a0a', text: '#f87171', label: 'Rejected' },
-  IN_PROGRESS: { bg: '#0c1a2e', text: '#38bdf8', label: 'In Progress' },
-  COMPLETED:   { bg: '#0a0a1a', text: '#818cf8', label: 'Completed' },
-  CANCELLED:   { bg: '#1a1a1a', text: '#64748b', label: 'Cancelled' },
-};
+import { statusColors, colors } from '../../src/theme/colors';
 
 export default function MyTripsScreen() {
   const router = useRouter();
@@ -41,7 +34,7 @@ export default function MyTripsScreen() {
   const onRefresh = () => { setRefreshing(true); fetchTrips(); };
 
   const renderTrip = ({ item }: { item: any }) => {
-    const s = STATUS_COLORS[item.status] || STATUS_COLORS.CANCELLED;
+    const s = statusColors[item.status] || statusColors.CANCELLED;
     const dept = new Date(item.departureAt);
     const fromLoc = item.fromOffice?.name || item.pickupAddress || 'Origin';
     const toLoc = item.toOffice?.name || item.dropoffAddress || 'Destination';
@@ -51,12 +44,12 @@ export default function MyTripsScreen() {
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={[styles.badge, { backgroundColor: s.bg }]}>
+            <View style={[styles.badge, { backgroundColor: s.bg, borderColor: s.border, borderWidth: 1 }]}>
               <Text style={[styles.badgeText, { color: s.text }]}>{s.label}</Text>
             </View>
             {isCustom && (
-              <View style={[styles.badge, { backgroundColor: '#1e1b4b' }]}>
-                <Text style={[styles.badgeText, { color: '#a5b4fc', fontSize: 10 }]}>📍 Custom Location</Text>
+              <View style={[styles.badge, { backgroundColor: '#EFF6FF', borderColor: '#BEDBFF', borderWidth: 1 }]}>
+                <Text style={[styles.badgeText, { color: '#2B7FFF', fontSize: 10 }]}>📍 Custom Location</Text>
               </View>
             )}
           </View>
@@ -119,7 +112,7 @@ export default function MyTripsScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color="#6366f1" size="large" />
+          <ActivityIndicator color="#2B7FFF" size="large" />
           <Text style={styles.loadingText}>Loading trips...</Text>
         </View>
       ) : trips.length === 0 ? (
@@ -140,7 +133,7 @@ export default function MyTripsScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderTrip}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2B7FFF" />}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -149,7 +142,7 @@ export default function MyTripsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#020617' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -157,12 +150,12 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#0f172a',
+    borderBottomColor: '#E2E8F0',
   },
-  screenTitle: { fontSize: 20, fontWeight: '800', color: '#f8fafc' },
-  screenSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  screenTitle: { fontSize: 20, fontWeight: '800', color: '#171717' },
+  screenSubtitle: { fontSize: 12, color: '#525252', marginTop: 2 },
   newBtn: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#2B7FFF',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 10,
@@ -170,48 +163,60 @@ const styles = StyleSheet.create({
   newBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   list: { padding: 16, gap: 12 },
   card: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E2E8F0',
     gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   badgeText: { fontSize: 11, fontWeight: '700' },
-  date: { fontSize: 11, color: '#475569' },
+  date: { fontSize: 11, color: '#878787', fontWeight: '500' },
   route: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  routeFrom: { fontSize: 13, color: '#94a3b8', flex: 1 },
-  routeArrow: { fontSize: 12, color: '#334155' },
-  routeTo: { fontSize: 13, color: '#94a3b8', flex: 1, textAlign: 'right' },
-  purpose: { fontSize: 14, color: '#f8fafc', fontWeight: '500', lineHeight: 20 },
+  routeFrom: { fontSize: 13, color: '#171717', fontWeight: '600', flex: 1 },
+  routeArrow: { fontSize: 12, color: '#2B7FFF', fontWeight: '700' },
+  routeTo: { fontSize: 13, color: '#171717', fontWeight: '600', flex: 1, textAlign: 'right' },
+  purpose: { fontSize: 14, color: '#262626', fontWeight: '500', lineHeight: 20 },
   passengerRow: { gap: 4 },
-  passengerLabel: { fontSize: 10, color: '#64748b', fontWeight: '700', textTransform: 'uppercase' },
+  passengerLabel: { fontSize: 10, color: '#878787', fontWeight: '700', textTransform: 'uppercase' },
   passengerTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   passengerTag: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  passengerTagText: { fontSize: 11, color: '#94a3b8' },
+  passengerTagText: { fontSize: 11, color: '#525252', fontWeight: '500' },
   assignedRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-  assignedLabel: { fontSize: 11, color: '#475569', fontWeight: '600', textTransform: 'uppercase' },
-  assignedValue: { fontSize: 12, color: '#94a3b8' },
-  tripType: { borderTopWidth: 1, borderTopColor: '#1e293b', paddingTop: 8 },
-  tripTypeText: { fontSize: 11, color: '#475569' },
+  assignedLabel: { fontSize: 11, color: '#878787', fontWeight: '600', textTransform: 'uppercase' },
+  assignedValue: { fontSize: 12, color: '#171717', fontWeight: '600' },
+  tripType: { borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 8 },
+  tripTypeText: { fontSize: 11, color: '#878787', fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  loadingText: { color: '#475569', fontSize: 13, marginTop: 8 },
+  loadingText: { color: '#878787', fontSize: 13, marginTop: 8 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#f8fafc' },
-  emptyDesc: { fontSize: 13, color: '#64748b' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#171717' },
+  emptyDesc: { fontSize: 13, color: '#525252' },
   emptyBtn: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#2B7FFF',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
     marginTop: 8,
+    shadowColor: '#2B7FFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   emptyBtnText: { color: '#fff', fontWeight: '700' },
 });

@@ -155,7 +155,7 @@ export default function FuelLogScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#020617',
+    backgroundColor: '#F8FAFC',
   },
   content: {
     padding: 20,
@@ -164,19 +164,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#171717',
   },
   subtitle: {
-    fontSize: 12,
-    color: '#94a3b8',
+    fontSize: 13,
+    color: '#525252',
     marginBottom: 8,
   },
   photoBox: {
     height: 180,
     borderRadius: 16,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#EFF6FF',
     borderWidth: 2,
-    borderColor: '#334155',
+    borderColor: '#BEDBFF',
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
@@ -191,8 +191,8 @@ const styles = StyleSheet.create({
   },
   photoText: {
     fontSize: 13,
-    color: '#94a3b8',
-    fontWeight: '600',
+    color: '#2B7FFF',
+    fontWeight: '700',
   },
   previewImage: {
     width: '100%',
@@ -208,24 +208,29 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#cbd5e1',
+    fontWeight: '700',
+    color: '#525252',
   },
   input: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 14,
-    color: '#ffffff',
+    color: '#171717',
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E2E8F0',
   },
   button: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#2B7FFF',
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 10,
+    shadowColor: '#2B7FFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   buttonDisabled: {
     opacity: 0.6,

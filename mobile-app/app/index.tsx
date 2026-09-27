@@ -102,7 +102,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="e.g. EMP-001 or john@vms.com"
-              placeholderTextColor="#475569"
+              placeholderTextColor="#94a3b8"
               value={identifier}
               onChangeText={setIdentifier}
               autoCapitalize="none"
@@ -117,7 +117,7 @@ export default function LoginScreen() {
               <TextInput
                 style={[styles.input, styles.passwordInput]}
                 placeholder="Enter your password"
-                placeholderTextColor="#475569"
+                placeholderTextColor="#94a3b8"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -156,7 +156,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#020617',
+    backgroundColor: '#F8FAFC',
   },
   scroll: {
     flexGrow: 1,
@@ -165,24 +165,24 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 36,
+    marginBottom: 32,
   },
   logoBadge: {
     width: 80,
     height: 80,
     borderRadius: 22,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1.5,
-    borderColor: '#38bdf8',
+    borderColor: '#BEDBFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
     overflow: 'hidden',
-    shadowColor: '#6366f1',
+    shadowColor: '#2B7FFF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.15,
     shadowRadius: 12,
-    elevation: 10,
+    elevation: 4,
   },
   logoImage: {
     width: '100%',
@@ -191,31 +191,37 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#171717',
     letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 13,
-    color: '#64748b',
+    color: '#525252',
     marginTop: 4,
     textAlign: 'center',
+    fontWeight: '500',
   },
   card: {
-    backgroundColor: '#0f172a',
-    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E2E8F0',
     gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
   cardTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#f8fafc',
+    fontWeight: '800',
+    color: '#171717',
   },
   cardSubtitle: {
     fontSize: 12,
-    color: '#64748b',
+    color: '#525252',
     lineHeight: 18,
     marginTop: -8,
   },
@@ -224,20 +230,20 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#94a3b8',
+    fontWeight: '700',
+    color: '#525252',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#020617',
+    backgroundColor: '#F8FAFC',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#f8fafc',
+    color: '#171717',
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E2E8F0',
   },
   passwordRow: {
     position: 'relative',
@@ -256,29 +262,30 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   btn: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#2B7FFF',
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 4,
-    shadowColor: '#4f46e5',
+    shadowColor: '#2B7FFF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   btnDisabled: {
     opacity: 0.6,
   },
   btnText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: '700',
   },
   footer: {
     textAlign: 'center',
-    fontSize: 11,
-    color: '#334155',
+    fontSize: 12,
+    color: '#878787',
     marginTop: 24,
+    fontWeight: '500',
   },
 });
