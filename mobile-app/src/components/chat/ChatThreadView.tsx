@@ -12,6 +12,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -50,6 +51,7 @@ const getRoleColor = (role: string = 'EMPLOYEE') => {
 
 export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, role }) => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useMobileStore();
   const [conversation, setConversation] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -375,8 +377,8 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
       keyboardVerticalOffset={85}
       style={styles.container}
     >
-      {/* Top Header Bar */}
-      <View style={styles.header}>
+      {/* Top Header Bar — respects device status bar height */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={20} color={colors.textPrimary} />
         </TouchableOpacity>
@@ -384,24 +386,37 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
           <Text style={styles.headerTitle} numberOfLines={1}>
             {conversation?.subject || 'Support & Dispatch Thread'}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 }}>
             <View
               style={{
                 width: 7,
                 height: 7,
                 borderRadius: 4,
-                backgroundColor: isDispatchOnline ? colors.success : colors.textMuted,
+                backgroundColor: conversation?.isResolved
+                  ? colors.success
+                  : isDispatchOnline ? colors.success : colors.textMuted,
               }}
             />
-            <Text style={[styles.headerSubtitle, { color: isDispatchOnline ? colors.success : colors.textMuted }]}>
+            <Text style={[styles.headerSubtitle, {
+              color: conversation?.isResolved
+                ? colors.success
+                : isDispatchOnline ? colors.success : colors.textMuted,
+            }]}>
               {conversation?.isResolved
-                ? 'Resolved'
+                ? '✓ Resolved'
                 : isDispatchOnline
                 ? 'Dispatch Online'
                 : 'Central Dispatch Team'}
             </Text>
           </View>
         </View>
+
+        {/* Resolved badge */}
+        {conversation?.isResolved && (
+          <View style={styles.resolvedBadge}>
+            <Text style={styles.resolvedBadgeText}>CLOSED</Text>
+          </View>
+        )}
       </View>
 
       {/* Linked Trip Banner (if available) */}
@@ -527,10 +542,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
+    paddingBottom: 12,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -550,7 +565,21 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 11,
     fontWeight: '600',
-    marginTop: 1,
+  },
+  resolvedBadge: {
+    backgroundColor: colors.pastelGreen,
+    borderWidth: 1,
+    borderColor: colors.pastelGreenBorder,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  resolvedBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.success,
+    letterSpacing: 0.5,
   },
   tripBanner: {
     flexDirection: 'row',

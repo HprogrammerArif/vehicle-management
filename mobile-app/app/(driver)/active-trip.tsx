@@ -300,7 +300,7 @@ export default function ActiveTripScreen() {
             <TextInput
               style={styles.modalInput}
               placeholder="Ending Odometer (km)"
-              placeholderTextColor="#64748b"
+              placeholderTextColor={colors.textMuted}
               keyboardType="numeric"
               value={endOdometer}
               onChangeText={setEndOdometer}
