@@ -204,7 +204,8 @@ const approveAndAssignTrip = async (req, res) => {
                 message: 'Both Vehicle and Driver must be assigned to approve trip',
             });
         }
-        // Atomic transaction: verify availability and assign
+        // ---- Phase 1: Fast core transaction (availability check + atomic assignment) ----
+        // Keep minimal DB ops inside the transaction to stay well within the 5s timeout.
         const result = await db_1.prisma.$transaction(async (tx) => {
             const vehicle = await tx.vehicle.findUniqueOrThrow({ where: { id: vehicleId } });
             if (vehicle.status !== 'AVAILABLE') {
@@ -212,12 +213,12 @@ const approveAndAssignTrip = async (req, res) => {
             }
             const driver = await tx.driver.findUniqueOrThrow({
                 where: { id: driverId },
-                include: { user: true },
+                include: { user: { select: { id: true, name: true, phone: true } } },
             });
             if (driver.status !== 'AVAILABLE') {
                 throw new Error(`Driver ${driver.user.name} is not available (Current status: ${driver.status})`);
             }
-            // Update trip
+            // Update trip status and assignment atomically
             const updatedTrip = await tx.trip.update({
                 where: { id },
                 data: {
@@ -229,56 +230,66 @@ const approveAndAssignTrip = async (req, res) => {
                 },
                 include: {
                     vehicle: true,
-                    driver: { include: { user: true } },
-                    fromOffice: true,
-                    toOffice: true,
-                    requester: true,
-                    passengers: true,
+                    driver: { include: { user: { select: { id: true, name: true, phone: true } } } },
+                    fromOffice: { select: { id: true, name: true } },
+                    toOffice: { select: { id: true, name: true } },
+                    requester: { select: { id: true, name: true } },
+                    passengers: { select: { id: true, userId: true, name: true } },
                 },
             });
-            // Update vehicle & driver status
+            // Flip vehicle & driver statuses
             await tx.vehicle.update({ where: { id: vehicleId }, data: { status: 'IN_USE' } });
             await tx.driver.update({ where: { id: driverId }, data: { status: 'ON_TRIP' } });
-            const fromName = updatedTrip.fromOffice?.name || updatedTrip.pickupAddress || 'Origin';
-            const toName = updatedTrip.toOffice?.name || updatedTrip.dropoffAddress || 'Destination';
-            // Create notification for requester
-            await tx.notification.create({
-                data: {
-                    userId: updatedTrip.requesterId,
-                    title: 'Trip Approved & Assigned',
-                    body: `Your trip from ${fromName} to ${toName} is approved. Driver: ${driver.user.name}, Vehicle: ${vehicle.model} (${vehicle.registrationNo}).`,
-                    type: 'TRIP_APPROVED',
-                },
+            return { updatedTrip, vehicle, driver };
+        }, { timeout: 30000 } // 30 seconds — give the DB time even under load
+        );
+        const { updatedTrip, vehicle, driver } = result;
+        const fromName = updatedTrip.fromOffice?.name || updatedTrip.pickupAddress || 'Origin';
+        const toName = updatedTrip.toOffice?.name || updatedTrip.dropoffAddress || 'Destination';
+        const adminUserId = req.user?.userId || updatedTrip.requesterId;
+        const departureStr = new Date(updatedTrip.departureAt).toLocaleString();
+        // ---- Phase 2: Post-transaction non-atomic writes (notifications + chat thread) ----
+        // These run outside the transaction so a slow notification write can never time it out.
+        try {
+            // Notifications for requester and driver
+            await db_1.prisma.notification.createMany({
+                data: [
+                    {
+                        userId: updatedTrip.requesterId,
+                        title: 'Trip Approved & Assigned',
+                        body: `Your trip from ${fromName} to ${toName} is approved. Driver: ${driver.user.name}, Vehicle: ${vehicle.model} (${vehicle.registrationNo}).`,
+                        type: 'TRIP_APPROVED',
+                    },
+                    {
+                        userId: driver.userId,
+                        title: 'New Trip Assigned',
+                        body: `You have been assigned to trip to ${toName} departing on ${departureStr}.`,
+                        type: 'TRIP_ASSIGNED',
+                    },
+                ],
+                skipDuplicates: true,
             });
-            // Create notification for driver
-            await tx.notification.create({
-                data: {
-                    userId: driver.userId,
-                    title: 'New Trip Assigned',
-                    body: `You have been assigned to trip to ${toName} departing on ${new Date(updatedTrip.departureAt).toLocaleDateString()}.`,
-                    type: 'TRIP_ASSIGNED',
-                },
-            });
-            // Automatically create a Trip-scoped real-time Chat Thread
-            const adminUserId = req.user?.userId || updatedTrip.requesterId;
+            // Passenger notifications
             const participantUserIds = Array.from(new Set([updatedTrip.requesterId, driver.userId, adminUserId]));
-            // Notify accompanying colleagues and include in chat thread
             if (updatedTrip.passengers && updatedTrip.passengers.length > 0) {
+                const passengerNotifs = [];
                 for (const p of updatedTrip.passengers) {
                     if (p.userId) {
                         participantUserIds.push(p.userId);
-                        await tx.notification.create({
-                            data: {
-                                userId: p.userId,
-                                title: 'Assigned to Trip',
-                                body: `You are scheduled as an accompanying colleague on trip to ${toName}. Driver: ${driver.user.name}, Vehicle: ${vehicle.model} (${vehicle.registrationNo}).`,
-                                type: 'TRIP_ASSIGNED',
-                            },
+                        passengerNotifs.push({
+                            userId: p.userId,
+                            title: 'Assigned to Trip',
+                            body: `You are scheduled as an accompanying colleague on trip to ${toName}. Driver: ${driver.user.name}, Vehicle: ${vehicle.model} (${vehicle.registrationNo}).`,
+                            type: 'TRIP_ASSIGNED',
                         });
                     }
                 }
+                if (passengerNotifs.length > 0) {
+                    await db_1.prisma.notification.createMany({ data: passengerNotifs, skipDuplicates: true });
+                }
             }
-            await tx.conversation.upsert({
+            // Create or update the trip-scoped chat thread
+            await db_1.prisma.conversation.upsert({
                 where: { tripId: updatedTrip.id },
                 update: {},
                 create: {
@@ -294,42 +305,45 @@ const approveAndAssignTrip = async (req, res) => {
                     messages: {
                         create: {
                             senderId: adminUserId,
-                            body: `✅ Trip Approved & Dispatched. Vehicle: ${vehicle.make} ${vehicle.model} (${vehicle.registrationNo}), Driver: ${driver.user.name} (${driver.user.phone || 'N/A'}). Departure scheduled for ${new Date(updatedTrip.departureAt).toLocaleString()}.`,
+                            body: `✅ Trip Approved & Dispatched. Vehicle: ${vehicle.make} ${vehicle.model} (${vehicle.registrationNo}), Driver: ${driver.user.name} (${driver.user.phone || 'N/A'}). Departure scheduled for ${departureStr}.`,
                             messageType: 'SYSTEM_EVENT',
                             isSystem: true,
                         },
                     },
                 },
             });
-            return updatedTrip;
-        });
-        // Real-time socket broadcast for all assigned parties
+        }
+        catch (postTxErr) {
+            // Don't fail the entire request if post-transaction writes fail
+            console.warn('Post-transaction notification/chat error (non-fatal):', postTxErr);
+        }
+        // ---- Phase 3: Real-time socket broadcasts ----
         try {
             (0, notifications_controller_1.emitNotification)({
-                userIds: [result.requesterId],
+                userIds: [updatedTrip.requesterId],
                 title: 'Trip Approved & Assigned',
-                body: `Your trip to ${result.toOffice?.name || result.dropoffAddress || 'Destination'} is approved.`,
+                body: `Your trip to ${toName} is approved.`,
                 type: 'TRIP_APPROVED',
-                data: { tripId: result.id },
+                data: { tripId: updatedTrip.id },
             });
-            if (result.driver?.userId) {
+            if (updatedTrip.driver?.userId) {
                 (0, notifications_controller_1.emitNotification)({
-                    userIds: [result.driver.userId],
+                    userIds: [updatedTrip.driver.userId],
                     title: 'New Trip Assigned',
-                    body: `You have been assigned to trip to ${result.toOffice?.name || result.dropoffAddress || 'Destination'}.`,
+                    body: `You have been assigned to trip to ${toName}.`,
                     type: 'TRIP_ASSIGNED',
-                    data: { tripId: result.id },
+                    data: { tripId: updatedTrip.id },
                 });
             }
-            if (result.passengers && result.passengers.length > 0) {
-                const passengerUserIds = result.passengers.map((p) => p.userId).filter(Boolean);
+            if (updatedTrip.passengers && updatedTrip.passengers.length > 0) {
+                const passengerUserIds = updatedTrip.passengers.map((p) => p.userId).filter(Boolean);
                 if (passengerUserIds.length > 0) {
                     (0, notifications_controller_1.emitNotification)({
                         userIds: passengerUserIds,
                         title: 'Assigned to Trip',
-                        body: `You are scheduled on trip to ${result.toOffice?.name || result.dropoffAddress || 'Destination'}.`,
+                        body: `You are scheduled on trip to ${toName}.`,
                         type: 'TRIP_ASSIGNED',
-                        data: { tripId: result.id },
+                        data: { tripId: updatedTrip.id },
                     });
                 }
             }
@@ -337,7 +351,7 @@ const approveAndAssignTrip = async (req, res) => {
         catch (notifErr) {
             console.warn('Socket notification error on trip approval:', notifErr);
         }
-        return res.json({ success: true, message: 'Trip approved and assigned successfully', data: result });
+        return res.json({ success: true, message: 'Trip approved and assigned successfully', data: updatedTrip });
     }
     catch (error) {
         console.error('Approve trip error:', error);

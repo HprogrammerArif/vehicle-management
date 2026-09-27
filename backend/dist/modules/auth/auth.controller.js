@@ -228,18 +228,65 @@ const createUser = async (req, res) => {
         let finalEmployeeId = employeeId ? employeeId.trim().toUpperCase() : null;
         if (!finalEmployeeId) {
             if (role === 'DRIVER') {
-                const driverCount = await db_1.prisma.driver.count();
-                finalEmployeeId = `DRV-${String(driverCount + 1).padStart(3, '0')}`;
+                // Find the highest existing DRV-NNN number and increment from there
+                const existingDriverIds = await db_1.prisma.user.findMany({
+                    where: { role: 'DRIVER', employeeId: { startsWith: 'DRV-' } },
+                    select: { employeeId: true },
+                });
+                const maxNum = existingDriverIds.reduce((max, u) => {
+                    const num = parseInt((u.employeeId || '').replace('DRV-', ''), 10);
+                    return isNaN(num) ? max : Math.max(max, num);
+                }, 0);
+                // Find a free slot (collision-safe loop)
+                let candidate = maxNum + 1;
+                let safe = false;
+                while (!safe && candidate < 10000) {
+                    const candidateId = `DRV-${String(candidate).padStart(3, '0')}`;
+                    const exists = await db_1.prisma.user.findFirst({ where: { employeeId: candidateId } });
+                    if (!exists) {
+                        finalEmployeeId = candidateId;
+                        safe = true;
+                    }
+                    else
+                        candidate++;
+                }
+                if (!safe) {
+                    return res.status(500).json({ success: false, message: 'Could not generate a unique driver ID' });
+                }
             }
             else {
-                const empCount = await db_1.prisma.user.count({ where: { role: 'EMPLOYEE' } });
-                finalEmployeeId = `EMP-${100 + empCount + 1}`;
+                // Find the highest existing EMP-NNN number and increment from there
+                const existingEmpIds = await db_1.prisma.user.findMany({
+                    where: { role: 'EMPLOYEE', employeeId: { startsWith: 'EMP-' } },
+                    select: { employeeId: true },
+                });
+                const maxNum = existingEmpIds.reduce((max, u) => {
+                    const num = parseInt((u.employeeId || '').replace('EMP-', ''), 10);
+                    return isNaN(num) ? max : Math.max(max, num);
+                }, 100);
+                // Find a free slot (collision-safe loop)
+                let candidate = maxNum + 1;
+                let safe = false;
+                while (!safe && candidate < 100000) {
+                    const candidateId = `EMP-${candidate}`;
+                    const exists = await db_1.prisma.user.findFirst({ where: { employeeId: candidateId } });
+                    if (!exists) {
+                        finalEmployeeId = candidateId;
+                        safe = true;
+                    }
+                    else
+                        candidate++;
+                }
+                if (!safe) {
+                    return res.status(500).json({ success: false, message: 'Could not generate a unique employee ID' });
+                }
             }
         }
         else {
+            // Manual ID provided — check it's not already taken
             const existingId = await db_1.prisma.user.findFirst({ where: { employeeId: finalEmployeeId } });
             if (existingId) {
-                return res.status(400).json({ success: false, message: `Employee ID ${finalEmployeeId} already assigned` });
+                return res.status(400).json({ success: false, message: `Employee ID ${finalEmployeeId} is already assigned to another user` });
             }
         }
         // Organization fallback
@@ -350,25 +397,99 @@ const listUsers = async (req, res) => {
     }
 };
 exports.listUsers = listUsers;
-// DELETE /auth/users/:id — Admin soft-deletes or deactivates a user
+// DELETE /auth/users/:id — Admin permanently deletes a user (hard delete with cascade)
 const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await db_1.prisma.user.findUnique({ where: { id } });
+        const requesterId = req.user?.userId;
+        const user = await db_1.prisma.user.findUnique({
+            where: { id },
+            include: { driverProfile: { select: { id: true } } },
+        });
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
         if (user.role === 'ADMIN') {
-            return res.status(400).json({ success: false, message: 'Admin accounts cannot be deactivated via this endpoint' });
+            return res.status(400).json({ success: false, message: 'Admin accounts cannot be deleted' });
         }
-        await db_1.prisma.user.update({
-            where: { id },
-            data: { isActive: false },
+        // Prevent self-deletion
+        if (requesterId && user.id === requesterId) {
+            return res.status(400).json({ success: false, message: 'You cannot delete your own account' });
+        }
+        // Check if driver is currently on an active trip
+        if (user.driverProfile) {
+            const activeTrip = await db_1.prisma.trip.findFirst({
+                where: {
+                    driverId: user.driverProfile.id,
+                    status: { in: ['APPROVED', 'IN_PROGRESS'] },
+                },
+            });
+            if (activeTrip) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot delete a driver who is currently assigned to an active trip. Complete or reassign the trip first.',
+                });
+            }
+        }
+        // Check if employee has pending or active trip requests
+        const activeRequestedTrip = await db_1.prisma.trip.findFirst({
+            where: {
+                requesterId: user.id,
+                status: { in: ['PENDING', 'APPROVED', 'IN_PROGRESS'] },
+            },
         });
-        return res.json({ success: true, message: 'User deactivated successfully' });
+        if (activeRequestedTrip) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete an employee with pending or active trip requests. Cancel or resolve them first.',
+            });
+        }
+        // Perform safe cascading delete inside a transaction
+        await db_1.prisma.$transaction(async (tx) => {
+            // 1. Delete all chat messages sent by this user (avoids foreign key constraint)
+            await tx.chatMessage.deleteMany({ where: { senderId: id } });
+            // 2. Unassign driver from any historical trips so driver can be deleted cleanly
+            if (user.driverProfile) {
+                await tx.trip.updateMany({
+                    where: { driverId: user.driverProfile.id },
+                    data: { driverId: null },
+                });
+            }
+            // 3. For any completed/cancelled trips requested by this user, reassign requester to admin (or cleanup)
+            if (requesterId) {
+                await tx.trip.updateMany({
+                    where: { requesterId: id },
+                    data: { requesterId },
+                });
+            }
+            else {
+                const trips = await tx.trip.findMany({ where: { requesterId: id }, select: { id: true } });
+                const tripIds = trips.map((t) => t.id);
+                if (tripIds.length > 0) {
+                    await tx.trackingPoint.deleteMany({ where: { tripId: { in: tripIds } } });
+                    await tx.tripPassenger.deleteMany({ where: { tripId: { in: tripIds } } });
+                    await tx.fuelLog.updateMany({ where: { tripId: { in: tripIds } }, data: { tripId: null } });
+                    const convs = await tx.conversation.findMany({ where: { tripId: { in: tripIds } }, select: { id: true } });
+                    const convIds = convs.map((c) => c.id);
+                    if (convIds.length > 0) {
+                        await tx.chatMessage.deleteMany({ where: { conversationId: { in: convIds } } });
+                        await tx.convParticipant.deleteMany({ where: { conversationId: { in: convIds } } });
+                        await tx.conversation.deleteMany({ where: { id: { in: convIds } } });
+                    }
+                    await tx.trip.deleteMany({ where: { id: { in: tripIds } } });
+                }
+            }
+            // 4. Delete the user (Prisma cascade will delete DriverProfile, Notifications, ConvParticipant)
+            await tx.user.delete({ where: { id } });
+        });
+        return res.json({
+            success: true,
+            message: `${user.name} (${user.employeeId || user.email}) has been permanently deleted`,
+        });
     }
     catch (error) {
-        return res.status(500).json({ success: false, message: 'Failed to deactivate user' });
+        console.error('Delete user error:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Failed to delete user' });
     }
 };
 exports.deleteUser = deleteUser;

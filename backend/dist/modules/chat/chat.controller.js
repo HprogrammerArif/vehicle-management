@@ -167,28 +167,23 @@ const getUnreadCount = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ success: false, message: 'Unauthorized' });
         }
-        // Find all participant entries for this user
+        // Find all participant entries for this user in a single query
         const userParticipants = await db_1.prisma.convParticipant.findMany({
             where: { userId },
-            select: {
-                conversationId: true,
-                lastReadAt: true,
-            },
+            select: { conversationId: true, lastReadAt: true },
         });
         if (userParticipants.length === 0) {
             return res.json({ success: true, count: 0 });
         }
-        let totalUnread = 0;
-        for (const p of userParticipants) {
-            const unreadCount = await db_1.prisma.chatMessage.count({
-                where: {
-                    conversationId: p.conversationId,
-                    senderId: { not: userId },
-                    ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
-                },
-            });
-            totalUnread += unreadCount;
-        }
+        // Build a single OR query instead of N sequential queries
+        const orConditions = userParticipants.map((p) => ({
+            conversationId: p.conversationId,
+            senderId: { not: userId },
+            ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
+        }));
+        const totalUnread = await db_1.prisma.chatMessage.count({
+            where: { OR: orConditions },
+        });
         return res.json({ success: true, count: totalUnread });
     }
     catch (error) {
@@ -425,6 +420,7 @@ const sendMessage = async (req, res) => {
         // Broadcast through socket if available
         if (ioInstance) {
             ioInstance.to(`chat_${id}`).emit('chat:message', message);
+            // Include conversationId so clients can do targeted local updates instead of full reloads
             ioInstance.to('admin_fleet').emit('chat:unread_update', { conversationId: id });
         }
         return res.status(201).json({ success: true, data: message });
