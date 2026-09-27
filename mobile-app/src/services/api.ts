@@ -145,3 +145,26 @@ export const mobileChatApi = {
     return mobileApi('/chat/unread-count');
   },
 };
+
+// Fuel API
+export const fuelApi = {
+  /** Fetch all fuel logs for the logged-in driver (filtered by driverId on server via token) */
+  getMyFuelLogs: () => mobileApi('/fuel?mine=1'),
+
+  /** Submit a new fuel log entry */
+  logFuel: (data: {
+    vehicleId: string;
+    driverId?: string;
+    tripId?: string;
+    odometerReading: number;
+    fuelAdded: number;
+    pricePerLiter: number;
+    stationName?: string;
+    receiptPhoto?: string;
+    notes?: string;
+  }) =>
+    mobileApi('/fuel', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
