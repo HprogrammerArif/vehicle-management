@@ -1,5 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Image as ImageIcon, X, Upload, Loader2, Smile } from 'lucide-react';
+import {
+  Send,
+  Paperclip,
+  Image as ImageIcon,
+  X,
+  Upload,
+  Loader2,
+  Smile,
+  Car,
+  MapPin,
+  Fuel,
+  CloudRain,
+  CheckCircle,
+} from 'lucide-react';
 import { api } from '../../lib/api';
 
 interface MessageInputProps {
@@ -93,11 +106,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const quickTemplates = [
-    { label: '🚗 Trip Approved', text: 'All set! Your trip request is approved. Safe driving! 🚗' },
-    { label: '📍 Status Check', text: 'Hey there, how is the route looking? Send a quick ping when safe. 📍' },
-    { label: '⛽ Fuel Logged', text: 'Fuel receipt verified and logged. Thanks for sending it through! ⛽' },
-    { label: '🌧️ Weather Alert', text: 'Caution: Heavy traffic/rain reported ahead. Please drive carefully! 🌧️' },
-    { label: '🙌 Issue Resolved', text: 'All resolved on our end. Let us know if you need anything else! 🙌' },
+    { label: 'Trip Approved', icon: Car, text: 'All set! Your trip request is approved. Safe driving!' },
+    { label: 'Status Check', icon: MapPin, text: 'Hey there, how is the route looking? Send a quick ping when safe.' },
+    { label: 'Fuel Logged', icon: Fuel, text: 'Fuel receipt verified and logged. Thanks for sending it through!' },
+    { label: 'Weather Alert', icon: CloudRain, text: 'Caution: Heavy traffic/rain reported ahead. Please drive carefully!' },
+    { label: 'Issue Resolved', icon: CheckCircle, text: 'All resolved on our end. Let us know if you need anything else!' },
   ];
 
   return (
@@ -107,16 +120,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         <span className="text-slate-400 font-semibold text-[11px] uppercase tracking-wider shrink-0 mr-1">
           Quick Dispatch:
         </span>
-        {quickTemplates.map((tmpl, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => setText((prev) => (prev ? `${prev} ${tmpl.text}` : tmpl.text))}
-            className="px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] shrink-0 transition-colors cursor-pointer hover:border-slate-600 active:scale-95"
-          >
-            {tmpl.label}
-          </button>
-        ))}
+        {quickTemplates.map((tmpl, idx) => {
+          const Icon = tmpl.icon;
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setText((prev) => (prev ? `${prev} ${tmpl.text}` : tmpl.text))}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] shrink-0 transition-colors cursor-pointer hover:border-slate-600 active:scale-95"
+            >
+              <Icon className="w-3 h-3 text-indigo-400" />
+              <span>{tmpl.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Attachment Preview Chip */}

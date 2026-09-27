@@ -17,8 +17,13 @@ const vehicleIcon = L.divIcon({
   html: `
     <div class="relative flex items-center justify-center">
       <div class="absolute w-8 h-8 rounded-full bg-indigo-500/30 animate-ping"></div>
-      <div class="w-10 h-10 rounded-full bg-slate-900 border-2 border-indigo-500 shadow-xl flex items-center justify-center text-white">
-        🚗
+      <div class="w-10 h-10 rounded-full bg-slate-900 border-2 border-indigo-500 shadow-xl flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+          <circle cx="7" cy="17" r="2"/>
+          <path d="M9 17h6"/>
+          <circle cx="17" cy="17" r="2"/>
+        </svg>
       </div>
     </div>
   `,
@@ -29,8 +34,20 @@ const vehicleIcon = L.divIcon({
 const officeIcon = L.divIcon({
   className: 'custom-office-marker',
   html: `
-    <div class="w-8 h-8 rounded-lg bg-emerald-600 border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold">
-      🏢
+    <div class="w-8 h-8 rounded-lg bg-emerald-600 border-2 border-white shadow-lg flex items-center justify-center">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/>
+        <path d="M9 22v-4h6v4"/>
+        <path d="M8 6h.01"/>
+        <path d="M16 6h.01"/>
+        <path d="M12 6h.01"/>
+        <path d="M12 10h.01"/>
+        <path d="M12 14h.01"/>
+        <path d="M16 10h.01"/>
+        <path d="M16 14h.01"/>
+        <path d="M8 10h.01"/>
+        <path d="M8 14h.01"/>
+      </svg>
     </div>
   `,
   iconSize: [32, 32],

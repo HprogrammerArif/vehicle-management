@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { Camera } from 'lucide-react-native';
 import { mobileApi, mobileChatApi } from '../../src/services/api';
 import { useMobileStore } from '../../src/store/useMobileStore';
 
@@ -92,7 +93,7 @@ export default function FuelLogScreen() {
           <Image source={{ uri: receiptImage }} style={styles.previewImage} />
         ) : (
           <View style={styles.photoPlaceholder}>
-            <Text style={styles.cameraIcon}>📸</Text>
+            <Camera size={36} color="#2B7FFF" />
             <Text style={styles.photoText}>Tap to Photograph Receipt</Text>
           </View>
         )}

@@ -12,6 +12,8 @@ import {
   CheckCheck,
   Sparkles,
   FileText,
+  Lock,
+  Zap,
 } from 'lucide-react';
 
 interface MessageThreadProps {
@@ -98,7 +100,7 @@ export const MessageThread: React.FC<MessageThreadProps> = ({ messages, isTyping
       if (last && last.senderId !== user?.id && !last.isSystem) {
         playMessageChime();
         if (document.hidden) {
-          document.title = `(1) 💬 ${last.sender?.name || 'New message'} - Apex VMS`;
+          document.title = `(1) ${last.sender?.name || 'New message'} - Apex VMS`;
         }
       }
     }
@@ -132,8 +134,14 @@ export const MessageThread: React.FC<MessageThreadProps> = ({ messages, isTyping
             This channel connects you directly with the driver and passengers. Messages, telemetry alerts, and location updates are synced in real-time.
           </p>
           <div className="pt-2 flex flex-wrap justify-center gap-1.5 text-[11px] text-slate-500">
-            <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">🔒 End-to-end logged</span>
-            <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">⚡ Live GPS synced</span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
+              <Lock className="w-3 h-3 text-slate-400" />
+              End-to-end logged
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
+              <Zap className="w-3 h-3 text-amber-400" />
+              Live GPS synced
+            </span>
           </div>
         </div>
       </div>

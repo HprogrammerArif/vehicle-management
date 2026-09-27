@@ -334,7 +334,7 @@ export const approveAndAssignTrip = async (req: Request, res: Response) => {
           messages: {
             create: {
               senderId: adminUserId,
-              body: `✅ Trip Approved & Dispatched. Vehicle: ${vehicle.make} ${vehicle.model} (${vehicle.registrationNo}), Driver: ${driver.user.name} (${driver.user.phone || 'N/A'}). Departure scheduled for ${departureStr}.`,
+              body: `Trip Approved & Dispatched. Vehicle: ${vehicle.make} ${vehicle.model} (${vehicle.registrationNo}), Driver: ${driver.user.name} (${driver.user.phone || 'N/A'}). Departure scheduled for ${departureStr}.`,
               messageType: 'SYSTEM_EVENT',
               isSystem: true,
             },
@@ -490,7 +490,7 @@ export const startTrip = async (req: Request, res: Response) => {
     await prisma.notification.create({
       data: {
         userId: trip.requesterId,
-        title: 'Trip Started 🚀',
+        title: 'Trip Started',
         body: `Driver ${trip.driver?.user?.name || 'Assigned Driver'} has commenced your trip: ${fromLoc} → ${toLoc}.`,
         type: 'TRIP_STARTED',
       },
@@ -502,7 +502,7 @@ export const startTrip = async (req: Request, res: Response) => {
         await prisma.notification.create({
           data: {
             userId: p.userId,
-            title: 'Trip Started 🚀',
+            title: 'Trip Started',
             body: `Trip ${fromLoc} → ${toLoc} has commenced.`,
             type: 'TRIP_STARTED',
           },
@@ -514,7 +514,7 @@ export const startTrip = async (req: Request, res: Response) => {
       const recipientIds = [trip.requesterId, ...trip.passengers.map((p) => p.userId).filter(Boolean) as string[]];
       emitNotification({
         userIds: recipientIds,
-        title: 'Trip Started 🚀',
+        title: 'Trip Started',
         body: `Driver ${trip.driver?.user?.name || 'Assigned Driver'} has commenced your trip: ${fromLoc} → ${toLoc}.`,
         type: 'TRIP_STARTED',
         data: { tripId: trip.id },
@@ -586,7 +586,7 @@ export const completeTrip = async (req: Request, res: Response) => {
       await tx.notification.create({
         data: {
           userId: existingTrip.requesterId,
-          title: 'Trip Completed 🏁',
+          title: 'Trip Completed',
           body: `Your trip to ${toLoc} has arrived and concluded. Distance covered: ${distanceCovered} km.`,
           type: 'TRIP_COMPLETED',
         },
@@ -597,7 +597,7 @@ export const completeTrip = async (req: Request, res: Response) => {
         await tx.notification.create({
           data: {
             userId: existingTrip.driver.userId,
-            title: 'Trip Completed 🏁',
+            title: 'Trip Completed',
             body: `Trip to ${toLoc} completed successfully. Distance: ${distanceCovered} km. You are now Available.`,
             type: 'TRIP_COMPLETED',
           },
@@ -610,7 +610,7 @@ export const completeTrip = async (req: Request, res: Response) => {
           await tx.notification.create({
             data: {
               userId: p.userId,
-              title: 'Trip Completed 🏁',
+              title: 'Trip Completed',
               body: `Your trip to ${toLoc} has concluded.`,
               type: 'TRIP_COMPLETED',
             },
@@ -626,7 +626,7 @@ export const completeTrip = async (req: Request, res: Response) => {
       if (existingTrip.driver?.userId) recipientIds.push(existingTrip.driver.userId);
       emitNotification({
         userIds: recipientIds,
-        title: 'Trip Completed 🏁',
+        title: 'Trip Completed',
         body: `Your trip to ${toLoc} has arrived and concluded. Distance covered: ${distanceCovered} km.`,
         type: 'TRIP_COMPLETED',
         data: { tripId: result.id },

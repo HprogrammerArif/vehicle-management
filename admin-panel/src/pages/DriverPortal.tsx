@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trip, FuelLog } from '../types';
 import { api } from '../lib/api';
 import { useStore } from '../store/useStore';
-import { Truck, Play, CheckCircle2, Fuel, Radio, MapPin, Clock, Calendar } from 'lucide-react';
+import { Truck, Play, CheckCircle2, Fuel, Radio, MapPin, Clock, Calendar, Car } from 'lucide-react';
 
 export const DriverPortal: React.FC = () => {
   const { user, setActiveTab, setIsSimulating } = useStore();
@@ -51,7 +51,7 @@ export const DriverPortal: React.FC = () => {
       <div className="glass-card p-6 rounded-3xl border border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold text-xl">
-            🚗
+            <Car className="w-7 h-7 text-indigo-400" />
           </div>
           <div>
             <h2 className="font-display font-extrabold text-xl text-white">Driver Dispatch Console</h2>

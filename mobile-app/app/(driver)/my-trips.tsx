@@ -9,10 +9,13 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import {
+  MapPin, Flag, Car, User, Users, Shield,
+  Wifi, Zap, Fuel, RefreshCw, ChevronRight, Ruler,
+} from 'lucide-react-native';
 import { tripsApi } from '../../src/services/api';
 import { useMobileStore } from '../../src/store/useMobileStore';
 import { AppHeader } from '../../src/components/AppHeader';
-
 import { statusColors, colors } from '../../src/theme/colors';
 
 export default function DriverTripsScreen() {
@@ -70,7 +73,7 @@ export default function DriverTripsScreen() {
             {isCustom && (
               <View style={[styles.badge, { backgroundColor: '#EFF6FF', borderColor: '#BEDBFF', borderWidth: 1 }]}>
                 <Text style={[styles.badgeText, { color: '#2B7FFF', fontSize: 10 }]}>
-                  📍 Custom Location
+                  Custom Location
                 </Text>
               </View>
             )}
@@ -82,13 +85,15 @@ export default function DriverTripsScreen() {
 
         {/* Route */}
         <View style={styles.route}>
-          <Text style={styles.routeFrom} numberOfLines={2}>
-            📍 {fromLoc}
-          </Text>
-          <Text style={styles.routeArrow}>→</Text>
-          <Text style={styles.routeTo} numberOfLines={2}>
-            🏁 {toLoc}
-          </Text>
+          <View style={styles.routeEndpoint}>
+            <MapPin size={13} color={colors.primary} />
+            <Text style={styles.routeFrom} numberOfLines={2}>{fromLoc}</Text>
+          </View>
+          <ChevronRight size={14} color={colors.textMuted} />
+          <View style={styles.routeEndpoint}>
+            <Flag size={13} color={colors.success} />
+            <Text style={styles.routeTo} numberOfLines={2}>{toLoc}</Text>
+          </View>
         </View>
 
         {/* Purpose */}
@@ -100,9 +105,15 @@ export default function DriverTripsScreen() {
         {item.vehicle && (
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Assigned Vehicle:</Text>
-            <Text style={styles.detailValue}>
-              🚗 {item.vehicle.make} {item.vehicle.model} ({item.vehicle.registrationNo})
+            <Text style={styles.detailValue} numberOfLines={1} ellipsizeMode="tail">
+              <Car size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
+            {item.vehicle.make} {item.vehicle.model}
             </Text>
+            <View style={styles.regPill}>
+              <Text style={styles.regText} numberOfLines={1} ellipsizeMode="tail">
+                {item.vehicle.registrationNo}
+              </Text>
+            </View>
           </View>
         )}
 
@@ -110,8 +121,9 @@ export default function DriverTripsScreen() {
         {item.requester && (
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Passenger / Dept:</Text>
-            <Text style={styles.detailValue}>
-              👤 {item.requester.name} {item.requester.phone ? `(${item.requester.phone})` : ''}
+            <Text style={styles.detailValue} numberOfLines={1} ellipsizeMode="tail">
+              <User size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+              {item.requester.name} {item.requester.phone ? `(${item.requester.phone})` : ''}
             </Text>
           </View>
         )}
@@ -124,7 +136,7 @@ export default function DriverTripsScreen() {
               {item.passengers.map((p: any) => (
                 <View key={p.id || p.employeeId || p.name} style={styles.passengerTag}>
                   <Text style={styles.passengerTagText}>
-                    👤 {p.name} {p.employeeId ? `(${p.employeeId})` : ''}
+                    {p.name} {p.employeeId ? `(${p.employeeId})` : ''}
                   </Text>
                 </View>
               ))}
@@ -136,7 +148,8 @@ export default function DriverTripsScreen() {
         {item.status === 'COMPLETED' && item.distanceCovered && (
           <View style={styles.distanceBox}>
             <Text style={styles.distanceText}>
-              🏁 Trip Distance: {item.distanceCovered} km (Odo: {item.startOdometer} → {item.endOdometer})
+              <Ruler size={13} color={colors.primary} style={{ marginRight: 4 }} />
+              {item.distanceCovered} km  (Odo: {item.startOdometer} → {item.endOdometer})
             </Text>
           </View>
         )}
@@ -147,9 +160,14 @@ export default function DriverTripsScreen() {
             style={styles.actionBtn}
             onPress={() => router.push('/(driver)/active-trip')}
           >
-            <Text style={styles.actionBtnText}>
-              {item.status === 'IN_PROGRESS' ? '📡 Return to Live GPS Console' : '🚀 Open Duty Console'}
-            </Text>
+            <View style={styles.actionBtnInner}>
+              {item.status === 'IN_PROGRESS'
+                ? <Wifi size={16} color="#fff" />
+                : <Zap size={16} color="#fff" />}
+              <Text style={styles.actionBtnText}>
+                {item.status === 'IN_PROGRESS' ? 'Return to Live GPS Console' : 'Open Duty Console'}
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
       </View>
@@ -188,7 +206,9 @@ export default function DriverTripsScreen() {
         </View>
       ) : filteredTrips.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyIcon}>🛡️</Text>
+          <View style={styles.emptyIconCircle}>
+            <Shield size={32} color={colors.primary} />
+          </View>
           <Text style={styles.emptyTitle}>No trips in this view</Text>
           <Text style={styles.emptyDesc}>
             {filter === 'ALL'
@@ -263,14 +283,30 @@ const styles = StyleSheet.create({
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   badgeText: { fontSize: 11, fontWeight: '700' },
   date: { fontSize: 11, color: '#878787', fontWeight: '500' },
-  route: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  route: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  routeEndpoint: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
   routeFrom: { fontSize: 13, color: '#171717', fontWeight: '600', flex: 1 },
-  routeArrow: { fontSize: 12, color: '#2B7FFF', fontWeight: '700' },
-  routeTo: { fontSize: 13, color: '#171717', fontWeight: '600', flex: 1, textAlign: 'right' },
+  routeTo: { fontSize: 13, color: '#171717', fontWeight: '600', flex: 1 },
   purpose: { fontSize: 13, color: '#262626', fontWeight: '500', lineHeight: 18 },
-  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  detailRow: { gap: 2 },
   detailLabel: { fontSize: 10, color: '#878787', fontWeight: '700', textTransform: 'uppercase' },
-  detailValue: { fontSize: 12, color: '#171717', fontWeight: '600' },
+  detailValue: { fontSize: 12, color: '#171717', fontWeight: '600', flex: 1 },
+  regPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BEDBFF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    maxWidth: '100%',
+  },
+  regText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#2B7FFF',
+    fontFamily: 'monospace',
+  },
   passengerRow: { gap: 4 },
   passengerTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   passengerTag: {
@@ -302,10 +338,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  actionBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   actionBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, padding: 20 },
   loadingText: { color: '#878787', fontSize: 13, marginTop: 8 },
-  emptyIcon: { fontSize: 48 },
+  emptyIconCircle: {
+    width: 72, height: 72, borderRadius: 36,
+    backgroundColor: colors.primaryTint,
+    borderWidth: 1, borderColor: colors.primaryBorder,
+    justifyContent: 'center', alignItems: 'center',
+  },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#171717' },
   emptyDesc: { fontSize: 13, color: '#525252', textAlign: 'center' },
 });

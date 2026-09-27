@@ -12,6 +12,8 @@ import {
   CheckSquare,
   MessageSquare,
   Users,
+  Car,
+  User,
 } from 'lucide-react';
 
 /** Resolves the displayed route label for a trip — handles both office-based and custom-location trips */
@@ -120,7 +122,7 @@ export const TripsPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-indigo-400 font-bold">
-                      🚗
+                      <Car className="w-5 h-5 text-indigo-400" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -137,8 +139,8 @@ export const TripsPage: React.FC = () => {
 
                   <div className="flex items-center gap-3">
                     {isCustomLocation && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                        📍 Custom Location
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                        <MapPin className="w-3 h-3 text-cyan-400" /> Custom Location
                       </span>
                     )}
                     <span
@@ -194,11 +196,13 @@ export const TripsPage: React.FC = () => {
                     </span>
                     {trip.vehicle && trip.driver ? (
                       <div className="space-y-0.5">
-                        <p className="text-white font-medium">
-                          🚘 {trip.vehicle.make} {trip.vehicle.model} ({trip.vehicle.registrationNo})
+                        <p className="text-white font-medium flex items-center gap-1.5">
+                          <Car className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          {trip.vehicle.make} {trip.vehicle.model} ({trip.vehicle.registrationNo})
                         </p>
-                        <p className="text-slate-300">
-                          👨‍✈️ {trip.driver.user?.name || 'Driver'}{' '}
+                        <p className="text-slate-300 flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          {trip.driver.user?.name || 'Driver'}{' '}
                           <span className="text-slate-500">
                             ({trip.driver.user?.phone || 'No phone'})
                           </span>

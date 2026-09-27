@@ -13,6 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { authApi } from '../src/services/api';
 import { useMobileStore } from '../src/store/useMobileStore';
 import { getMobileSocket } from '../src/services/socket';
@@ -126,7 +127,11 @@ export default function LoginScreen() {
                 style={styles.eyeBtn}
                 onPress={() => setShowPassword(!showPassword)}
               >
-                <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+                {showPassword ? (
+                  <EyeOff size={18} color="#64748B" />
+                ) : (
+                  <Eye size={18} color="#64748B" />
+                )}
               </TouchableOpacity>
             </View>
           </View>

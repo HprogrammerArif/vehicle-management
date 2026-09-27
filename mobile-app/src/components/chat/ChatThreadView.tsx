@@ -65,21 +65,21 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
   const flatListRef = useRef<FlatList>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Quick dispatch templates with humanized emojis
+  // Quick dispatch templates
   const quickTemplates =
     role === 'DRIVER'
       ? [
-          '📍 Arrived at pickup spot',
-          '🚗 Delayed in traffic (~10m)',
-          '⛽ Quick fuel stop',
-          '✅ Trip completed safely',
-          '🚨 Need dispatch support',
+          'Arrived at pickup spot',
+          'Delayed in traffic (~10m)',
+          'Quick fuel stop',
+          'Trip completed safely',
+          'Need dispatch support',
         ]
       : [
-          '📍 Where are you right now?',
-          '🏢 Waiting at the building lobby',
-          '👥 Coming down with 1 colleague',
-          '👍 Thanks for the safe ride!',
+          'Where are you right now?',
+          'Waiting at the building lobby',
+          'Coming down with 1 colleague',
+          'Thanks for the ride!',
         ];
 
   // Load conversation details & messages
@@ -251,7 +251,7 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
 
       const res = await mobileChatApi.sendMessage(
         conversationId,
-        `📍 Live Location: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+        `Live Location: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
         'LOCATION_SHARE',
         mapsUrl
       );
@@ -403,7 +403,7 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
                 : isDispatchOnline ? colors.success : colors.textMuted,
             }]}>
               {conversation?.isResolved
-                ? '✓ Resolved'
+                ? 'Resolved'
                 : isDispatchOnline
                 ? 'Dispatch Online'
                 : 'Central Dispatch Team'}

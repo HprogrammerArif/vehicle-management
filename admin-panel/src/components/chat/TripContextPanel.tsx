@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Fuel,
   Radio,
+  LifeBuoy,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { getSocket } from '../../lib/socket';
@@ -98,15 +99,26 @@ export const TripContextPanel: React.FC<TripContextPanelProps> = ({ conversation
         <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-1">
           Thread Context
         </h3>
-        <p className="text-[11px] text-slate-400">
-          {conversation.type === 'TRIP_THREAD'
-            ? '🚀 Active Trip Dispatch'
-            : conversation.type === 'INCIDENT'
-            ? '🚨 Incident Response Channel'
-            : conversation.type === 'SUPPORT'
-            ? '💬 Support Ticket'
-            : 'General conversation'}
-        </p>
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1">
+          {conversation.type === 'TRIP_THREAD' ? (
+            <>
+              <Truck className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+              <span>Active Trip Dispatch</span>
+            </>
+          ) : conversation.type === 'INCIDENT' ? (
+            <>
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <span>Incident Response Channel</span>
+            </>
+          ) : conversation.type === 'SUPPORT' ? (
+            <>
+              <LifeBuoy className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <span>Support Ticket</span>
+            </>
+          ) : (
+            <span>General conversation</span>
+          )}
+        </div>
       </div>
 
       {/* Participants with Live Presence */}

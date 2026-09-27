@@ -13,6 +13,7 @@ import {
   Clock,
   Filter,
   Plus,
+  X,
 } from 'lucide-react';
 
 interface ConversationListProps {
@@ -204,10 +205,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
               title="Clear search"
             >
-              ✕
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -241,7 +242,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                   : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              {v === 'active' ? '● Active' : v === 'resolved' ? '✓ Resolved' : '◉ All'}
+              {v === 'active' ? 'Active' : v === 'resolved' ? 'Resolved' : 'All'}
             </button>
           ))}
         </div>

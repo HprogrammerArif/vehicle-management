@@ -10,12 +10,24 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import {
+  MapPin,
+  Flag,
+  Calendar,
+  ClipboardList,
+  Users,
+  X,
+  AlertTriangle,
+  ArrowRight,
+  Repeat,
+  RefreshCw,
+} from 'lucide-react-native';
 import { tripsApi, authApi } from '../../src/services/api';
 
 const TRIP_TYPES = [
-  { key: 'ONE_WAY', label: '➡️ One Way' },
-  { key: 'ROUND_TRIP', label: '🔄 Round Trip' },
-  { key: 'PICKUP_DROPOFF', label: '🔁 Pickup & Drop-off' },
+  { key: 'ONE_WAY', label: 'One Way', icon: ArrowRight },
+  { key: 'ROUND_TRIP', label: 'Round Trip', icon: Repeat },
+  { key: 'PICKUP_DROPOFF', label: 'Pickup & Drop-off', icon: RefreshCw },
 ];
 
 interface Passenger {
@@ -124,7 +136,7 @@ export default function RequestTripScreen() {
     setSubmitting(false);
     if (res.success) {
       Alert.alert(
-        '✅ Requisition Submitted',
+        'Requisition Submitted',
         'Your vehicle request has been sent to the Fleet Manager for approval.',
         [{ text: 'View My Trips', onPress: () => router.replace('/(employee)/my-trips') }]
       );
@@ -140,7 +152,10 @@ export default function RequestTripScreen() {
 
       {/* ── Pickup Location ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>📍 PICKUP LOCATION</Text>
+        <View style={styles.sectionHeader}>
+          <MapPin size={13} color="#2B7FFF" />
+          <Text style={styles.sectionLabel}>PICKUP LOCATION</Text>
+        </View>
         <TextInput
           style={styles.input}
           placeholder="Enter full pickup address (e.g. Gulshan-1, Dhaka)"
@@ -153,7 +168,10 @@ export default function RequestTripScreen() {
 
       {/* ── Dropoff Location ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>🏁 DESTINATION / DROPOFF</Text>
+        <View style={styles.sectionHeader}>
+          <Flag size={13} color="#EF4444" />
+          <Text style={styles.sectionLabel}>DESTINATION / DROPOFF</Text>
+        </View>
         <TextInput
           style={styles.input}
           placeholder="Enter full destination (e.g. Karnaphuli EPZ, Chittagong)"
@@ -168,23 +186,31 @@ export default function RequestTripScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>TRIP TYPE</Text>
         <View style={styles.typeRow}>
-          {TRIP_TYPES.map((t) => (
-            <TouchableOpacity
-              key={t.key}
-              style={[styles.typeChip, tripType === t.key && styles.typeChipSelected]}
-              onPress={() => setTripType(t.key)}
-            >
-              <Text style={[styles.typeChipText, tripType === t.key && styles.typeChipTextSelected]}>
-                {t.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {TRIP_TYPES.map((t) => {
+            const Icon = t.icon;
+            const isSelected = tripType === t.key;
+            return (
+              <TouchableOpacity
+                key={t.key}
+                style={[styles.typeChip, isSelected && styles.typeChipSelected]}
+                onPress={() => setTripType(t.key)}
+              >
+                <Icon size={14} color={isSelected ? '#2B7FFF' : '#525252'} style={{ marginRight: 6 }} />
+                <Text style={[styles.typeChipText, isSelected && styles.typeChipTextSelected]}>
+                  {t.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
       {/* ── Date & Time ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>🗓 DEPARTURE</Text>
+        <View style={styles.sectionHeader}>
+          <Calendar size={13} color="#525252" />
+          <Text style={styles.sectionLabel}>DEPARTURE</Text>
+        </View>
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
             <TextInput
@@ -211,7 +237,10 @@ export default function RequestTripScreen() {
 
       {/* ── Purpose ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>📋 OFFICIAL PURPOSE *</Text>
+        <View style={styles.sectionHeader}>
+          <ClipboardList size={13} color="#525252" />
+          <Text style={styles.sectionLabel}>OFFICIAL PURPOSE *</Text>
+        </View>
         <TextInput
           style={[styles.input, styles.textArea]}
           multiline
@@ -225,7 +254,10 @@ export default function RequestTripScreen() {
 
       {/* ── Passengers ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>👥 ACCOMPANYING COLLEAGUES</Text>
+        <View style={styles.sectionHeader}>
+          <Users size={13} color="#525252" />
+          <Text style={styles.sectionLabel}>ACCOMPANYING COLLEAGUES</Text>
+        </View>
         <Text style={styles.sectionHint}>Search by Employee ID to add colleagues</Text>
 
         {/* Added passengers list */}
@@ -245,7 +277,7 @@ export default function RequestTripScreen() {
                   style={styles.removeBtn}
                   onPress={() => handleRemovePassenger(p.employeeId)}
                 >
-                  <Text style={styles.removeText}>✕</Text>
+                  <X size={14} color="#EF4444" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -282,7 +314,8 @@ export default function RequestTripScreen() {
         {/* Error message */}
         {searchError ? (
           <View style={styles.searchError}>
-            <Text style={styles.searchErrorText}>⚠️ {searchError}</Text>
+            <AlertTriangle size={13} color="#DC2626" style={{ marginRight: 4 }} />
+            <Text style={styles.searchErrorText}>{searchError}</Text>
           </View>
         ) : null}
 
@@ -333,6 +366,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, color: '#525252', marginBottom: 4, marginTop: -8 },
 
   section: { gap: 8 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   sectionLabel: {
     fontSize: 11, fontWeight: '700', color: '#525252',
     textTransform: 'uppercase', letterSpacing: 0.8,
@@ -353,6 +387,8 @@ const styles = StyleSheet.create({
 
   typeRow: { gap: 8 },
   typeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: 10, backgroundColor: '#ffffff',
     borderWidth: 1, borderColor: '#E2E8F0',

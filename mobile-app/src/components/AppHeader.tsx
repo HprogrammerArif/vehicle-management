@@ -1,6 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import {
+  Bell,
+  MessageSquare,
+  LogOut,
+  Zap,
+  ClipboardList,
+  Fuel,
+  Plus,
+} from 'lucide-react-native';
 import { useMobileStore } from '../store/useMobileStore';
 import { getMobileSocket } from '../services/socket';
 
@@ -71,7 +80,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
               router.push(isDriver ? '/(driver)/notifications' : '/(employee)/notifications')
             }
           >
-            <Text style={{ fontSize: 16 }}>🔔</Text>
+            <Bell size={18} color="#2B7FFF" />
             {unreadNotifCount > 0 && (
               <View style={styles.notifBadge}>
                 <Text style={styles.notifBadgeText}>
@@ -88,7 +97,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
               router.push(isDriver ? '/(driver)/conversations' : '/(employee)/conversations')
             }
           >
-            <Text style={{ fontSize: 16 }}>💬</Text>
+            <MessageSquare size={18} color="#2B7FFF" />
             {unreadChatCount > 0 && (
               <View style={styles.chatBadge}>
                 <Text style={styles.notifBadgeText}>
@@ -100,6 +109,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
 
           {/* Sign Out */}
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <LogOut size={13} color="#F14141" style={{ marginRight: 3 }} />
             <Text style={styles.logoutText}>Exit</Text>
           </TouchableOpacity>
         </View>
@@ -120,13 +130,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
               style={[styles.navTab, activeScreen === 'active-trip' && styles.navTabActive]}
               onPress={() => router.replace('/(driver)/active-trip')}
             >
+              <Zap
+                size={13}
+                color={activeScreen === 'active-trip' ? '#ffffff' : '#525252'}
+                style={{ marginRight: 4 }}
+              />
               <Text
                 style={[
                   styles.navTabText,
                   activeScreen === 'active-trip' && styles.navTabTextActive,
                 ]}
               >
-                🚀 Active Mission
+                Active Mission
               </Text>
             </TouchableOpacity>
 
@@ -134,13 +149,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
               style={[styles.navTab, activeScreen === 'my-trips' && styles.navTabActive]}
               onPress={() => router.replace('/(driver)/my-trips')}
             >
+              <ClipboardList
+                size={13}
+                color={activeScreen === 'my-trips' ? '#ffffff' : '#525252'}
+                style={{ marginRight: 4 }}
+              />
               <Text
                 style={[
                   styles.navTabText,
                   activeScreen === 'my-trips' && styles.navTabTextActive,
                 ]}
               >
-                📋 Assignments
+                Assignments
               </Text>
             </TouchableOpacity>
 
@@ -148,13 +168,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
               style={[styles.navTab, activeScreen === 'fuel-log' && styles.navTabActive]}
               onPress={() => router.push('/(driver)/fuel-log')}
             >
+              <Fuel
+                size={13}
+                color={activeScreen === 'fuel-log' ? '#ffffff' : '#525252'}
+                style={{ marginRight: 4 }}
+              />
               <Text
                 style={[
                   styles.navTabText,
                   activeScreen === 'fuel-log' && styles.navTabTextActive,
                 ]}
               >
-                ⛽ Fuel Log
+                Fuel Log
               </Text>
             </TouchableOpacity>
           </>
@@ -164,13 +189,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
               style={[styles.navTab, activeScreen === 'my-trips' && styles.navTabActive]}
               onPress={() => router.replace('/(employee)/my-trips')}
             >
+              <ClipboardList
+                size={13}
+                color={activeScreen === 'my-trips' ? '#ffffff' : '#525252'}
+                style={{ marginRight: 4 }}
+              />
               <Text
                 style={[
                   styles.navTabText,
                   activeScreen === 'my-trips' && styles.navTabTextActive,
                 ]}
               >
-                📋 My Requisitions
+                My Requisitions
               </Text>
             </TouchableOpacity>
 
@@ -178,13 +208,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
               style={[styles.navTab, activeScreen === 'request-trip' && styles.navTabActive]}
               onPress={() => router.push('/(employee)/request-trip')}
             >
+              <Plus
+                size={13}
+                color={activeScreen === 'request-trip' ? '#ffffff' : '#525252'}
+                style={{ marginRight: 4 }}
+              />
               <Text
                 style={[
                   styles.navTabText,
                   activeScreen === 'request-trip' && styles.navTabTextActive,
                 ]}
               >
-                + New Request
+                New Request
               </Text>
             </TouchableOpacity>
 
@@ -192,13 +227,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
               style={[styles.navTab, activeScreen === 'notifications' && styles.navTabActive]}
               onPress={() => router.push('/(employee)/notifications')}
             >
+              <Bell
+                size={13}
+                color={activeScreen === 'notifications' ? '#ffffff' : '#525252'}
+                style={{ marginRight: 4 }}
+              />
               <Text
                 style={[
                   styles.navTabText,
                   activeScreen === 'notifications' && styles.navTabTextActive,
                 ]}
               >
-                🔔 Alerts
+                Alerts
               </Text>
             </TouchableOpacity>
           </>
@@ -326,6 +366,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 10,
@@ -359,6 +401,8 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   navTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,

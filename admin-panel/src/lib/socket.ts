@@ -10,12 +10,12 @@ export const getSocket = (): Socket => {
     });
 
     socket.on('connect', () => {
-      console.log('⚡ Connected to VMS Real-time Telemetry Gateway:', socket?.id);
+      console.log('[Socket] Connected to VMS Real-time Telemetry Gateway:', socket?.id);
       socket?.emit('join:admin');
     });
 
     socket.on('disconnect', () => {
-      console.log('🔌 Disconnected from telemetry gateway');
+      console.log('[Socket] Disconnected from telemetry gateway');
     });
   }
 

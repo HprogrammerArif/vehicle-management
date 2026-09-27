@@ -29,11 +29,11 @@ function routeLabel(trip: Trip): { from: string; to: string } {
 }
 
 const NOTIFICATION_TARGETS = [
-  { value: 'ALL_EMPLOYEES', label: '👤 All Employees' },
-  { value: 'ALL_DRIVERS', label: '🚗 All Drivers' },
-  { value: 'ALL', label: '📢 Everyone' },
-  { value: 'TRIP', label: '🛣️ Specific Trip' },
-  { value: 'USER', label: '🎯 Specific Person' },
+  { value: 'ALL_EMPLOYEES', label: 'All Employees' },
+  { value: 'ALL_DRIVERS', label: 'All Drivers' },
+  { value: 'ALL', label: 'Everyone' },
+  { value: 'TRIP', label: 'Specific Trip' },
+  { value: 'USER', label: 'Specific Person' },
 ];
 
 export const Dashboard: React.FC = () => {
@@ -108,7 +108,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <div>
               <h4 className="text-sm font-bold text-amber-300">
-                🚨 Fuel Audit Alert: {stats.fuel.anomalyCount} Suspected Consumption Anomaly
+                Fuel Audit Alert: {stats.fuel.anomalyCount} Suspected Consumption Anomaly
               </h4>
               <p className="text-xs text-amber-400/80">
                 A refuel log deviated significantly from rated efficiency. Please review receipt proof.
@@ -239,8 +239,9 @@ export const Dashboard: React.FC = () => {
           </div>
 
           {pendingTrips.length === 0 ? (
-            <div className="py-8 text-center text-slate-500 text-sm">
-              ✓ No pending requests. All employee bookings dispatched!
+            <div className="py-8 text-center text-slate-500 text-sm flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span>No pending requests. All employee bookings dispatched!</span>
             </div>
           ) : (
             <div className="divide-y divide-slate-800/80">
@@ -259,8 +260,8 @@ export const Dashboard: React.FC = () => {
                           {trip.tripType.replace('_', ' ')}
                         </span>
                         {isCustom && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                            📍 Custom Location
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            <MapPin className="w-3 h-3 text-cyan-400" /> Custom Location
                           </span>
                         )}
                       </div>

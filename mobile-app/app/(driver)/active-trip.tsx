@@ -13,6 +13,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
+import {
+  MapPin, Flag, User, Shield, RefreshCw,
+  Zap, Fuel, CheckCircle, MessageCircle, Wifi, Satellite,
+} from 'lucide-react-native';
 import { tripsApi } from '../../src/services/api';
 import { getMobileSocket } from '../../src/services/socket';
 import { useMobileStore } from '../../src/store/useMobileStore';
@@ -171,13 +175,16 @@ export default function ActiveTripScreen() {
       >
         {!activeTrip ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🛡️</Text>
+          <View style={styles.emptyIconCircle}>
+            <Shield size={36} color={colors.primary} />
+          </View>
           <Text style={styles.emptyTitle}>Standby Status: Available</Text>
           <Text style={styles.emptyDesc}>
             No active trips currently dispatched to your duty board. Pull down to refresh when admin assigns a vehicle.
           </Text>
           <TouchableOpacity style={styles.refreshBtn} onPress={onRefresh}>
-            <Text style={styles.refreshBtnText}>🔄 Check Assignments</Text>
+            <RefreshCw size={14} color={colors.primary} />
+            <Text style={styles.refreshBtnText}>Check Assignments</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -203,7 +210,7 @@ export default function ActiveTripScreen() {
           {/* Route Section */}
           <View style={styles.routeBox}>
             <View style={styles.routePoint}>
-              <Text style={styles.routeIcon}>📍</Text>
+              <MapPin size={16} color={colors.primary} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.routePointLabel}>PICKUP</Text>
                 <Text style={styles.routePointName}>{fromLocation}</Text>
@@ -211,7 +218,7 @@ export default function ActiveTripScreen() {
             </View>
             <View style={styles.routeDivider} />
             <View style={styles.routePoint}>
-              <Text style={styles.routeIcon}>🏁</Text>
+              <Flag size={16} color={colors.success} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.routePointLabel}>DESTINATION</Text>
                 <Text style={styles.routePointName}>{toLocation}</Text>
@@ -230,8 +237,9 @@ export default function ActiveTripScreen() {
                 <View style={styles.passengerTags}>
                   {activeTrip.passengers.map((p: any) => (
                     <View key={p.id || p.employeeId || p.name} style={styles.passengerTag}>
+                      <User size={11} color={colors.textSecondary} />
                       <Text style={styles.passengerTagText}>
-                        👤 {p.name}{p.employeeId ? ` (${p.employeeId})` : ''}
+                        {p.name}{p.employeeId ? ` (${p.employeeId})` : ''}
                       </Text>
                     </View>
                   ))}
@@ -242,7 +250,10 @@ export default function ActiveTripScreen() {
 
           {/* Live Telemetry Box */}
           <View style={styles.telemetryBox}>
-            <Text style={styles.telemetryLabel}>GPS Telemetry Gateway</Text>
+            <View style={styles.telemetryLabelRow}>
+              <Satellite size={13} color={colors.primary} />
+              <Text style={styles.telemetryLabel}>GPS Telemetry Gateway</Text>
+            </View>
             <Text style={styles.telemetryValue}>
               {coords
                 ? `Lat: ${coords.lat.toFixed(4)}, Lng: ${coords.lng.toFixed(4)} · Speed: ${Math.round(coords.speed || 0)} km/h`
@@ -256,7 +267,8 @@ export default function ActiveTripScreen() {
           <View style={styles.actions}>
             {activeTrip.status !== 'IN_PROGRESS' && (
               <TouchableOpacity style={styles.primaryButton} onPress={startJourney}>
-                <Text style={styles.buttonText}>🚀 Start Journey (Activate GPS)</Text>
+                <Zap size={18} color="#fff" />
+                <Text style={styles.buttonText}>Start Journey (Activate GPS)</Text>
               </TouchableOpacity>
             )}
 
@@ -266,14 +278,16 @@ export default function ActiveTripScreen() {
                   style={styles.fuelButton}
                   onPress={() => router.push('/(driver)/fuel-log')}
                 >
-                  <Text style={styles.fuelButtonText}>⛽ Log Fuel Purchase</Text>
+                  <Fuel size={16} color="#D97706" />
+                  <Text style={styles.fuelButtonText}>Log Fuel Purchase</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.completeButton}
                   onPress={() => setShowCompleteModal(true)}
                 >
-                  <Text style={styles.buttonText}>🏁 Complete Journey</Text>
+                  <CheckCircle size={18} color="#fff" />
+                  <Text style={styles.buttonText}>Complete Journey</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -282,7 +296,8 @@ export default function ActiveTripScreen() {
               style={styles.chatButton}
               onPress={() => router.push('/(driver)/conversations')}
             >
-              <Text style={styles.chatButtonText}>💬 Dispatch &amp; Passenger Chat</Text>
+              <MessageCircle size={16} color={colors.primary} />
+              <Text style={styles.chatButtonText}>Dispatch &amp; Passenger Chat</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -370,10 +385,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.03,
     elevation: 2,
   },
-  emptyIcon: { fontSize: 48 },
+  emptyIconCircle: {
+    width: 72, height: 72, borderRadius: 36,
+    backgroundColor: colors.primaryTint,
+    borderWidth: 1, borderColor: colors.primaryBorder,
+    justifyContent: 'center', alignItems: 'center',
+  },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#171717' },
   emptyDesc: { fontSize: 13, color: '#525252', textAlign: 'center', lineHeight: 20 },
   refreshBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: '#EFF6FF',
     borderWidth: 1,
     borderColor: '#BEDBFF',
@@ -430,7 +453,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   routePoint: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-  routeIcon: { fontSize: 16, marginTop: 1 },
   routePointLabel: { fontSize: 9, fontWeight: '800', color: '#525252', textTransform: 'uppercase' },
   routePointName: { fontSize: 13, fontWeight: '600', color: '#171717', marginTop: 2 },
   routeDivider: { height: 1, backgroundColor: '#E2E8F0', marginLeft: 26 },
@@ -439,6 +461,9 @@ const styles = StyleSheet.create({
   metaValue: { fontSize: 13, color: '#262626', fontStyle: 'italic' },
   passengerTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
   passengerTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#F1F5F9',
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -454,14 +479,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#BEDBFF',
   },
+  telemetryLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   telemetryLabel: { fontSize: 10, fontWeight: '700', color: '#2B7FFF', textTransform: 'uppercase' },
   telemetryValue: { fontSize: 12, color: '#1A6EEB', fontFamily: 'monospace', marginTop: 4 },
   actions: { gap: 10, marginTop: 6 },
   primaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: '#2B7FFF',
     paddingVertical: 14,
     borderRadius: 14,
-    alignItems: 'center',
     shadowColor: '#2B7FFF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -469,19 +498,25 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   fuelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: '#FEF3C6',
     borderWidth: 1,
     borderColor: '#FDE68A',
     paddingVertical: 13,
     borderRadius: 14,
-    alignItems: 'center',
   },
   fuelButtonText: { color: '#D97706', fontWeight: '700', fontSize: 14 },
   completeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: '#2F9B65',
     paddingVertical: 14,
     borderRadius: 14,
-    alignItems: 'center',
     shadowColor: '#2F9B65',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -490,12 +525,15 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 15 },
   chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: '#ffffff',
     borderWidth: 1.5,
     borderColor: '#2B7FFF',
     paddingVertical: 13,
     borderRadius: 14,
-    alignItems: 'center',
   },
   chatButtonText: { color: '#2B7FFF', fontWeight: '700', fontSize: 14 },
   modalOverlay: {

@@ -74,8 +74,8 @@ app.use(error_1.errorHandler);
 const PORT = env_1.ENV.PORT;
 server.listen(PORT, () => {
     console.log(`=======================================================`);
-    console.log(`🚗 VMS Server running on http://localhost:${PORT}`);
-    console.log(`📡 WebSocket Gateway ready for live telemetry`);
-    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`[VMS Server] Running on http://localhost:${PORT}`);
+    console.log(`[WebSocket] Gateway ready for live telemetry`);
+    console.log(`[Health] Health check: http://localhost:${PORT}/api/health`);
     console.log(`=======================================================`);
 });

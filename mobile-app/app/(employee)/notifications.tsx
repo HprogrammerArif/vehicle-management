@@ -10,17 +10,38 @@ import {
 } from 'react-native';
 import { notificationsApi } from '../../src/services/api';
 import { useMobileStore } from '../../src/store/useMobileStore';
+import {
+  CheckCircle2,
+  XCircle,
+  Car,
+  Zap,
+  Flag,
+  Fuel,
+  Wrench,
+  Megaphone,
+  Bell,
+} from 'lucide-react-native';
 import { colors } from '../../src/theme/colors';
 
-const TYPE_ICON: Record<string, string> = {
-  TRIP_APPROVED:  '✅',
-  TRIP_REJECTED:  '❌',
-  TRIP_ASSIGNED:  '🚗',
-  TRIP_STARTED:   '🚀',
-  TRIP_COMPLETED: '🏁',
-  FUEL_ANOMALY:   '⛽',
-  MAINTENANCE:    '🔧',
-  GENERAL:        '📢',
+const getTypeIcon = (type: string) => {
+  switch (type) {
+    case 'TRIP_APPROVED':
+      return <CheckCircle2 size={20} color="#2F9B65" />;
+    case 'TRIP_REJECTED':
+      return <XCircle size={20} color="#EF4444" />;
+    case 'TRIP_ASSIGNED':
+      return <Car size={20} color={colors.primary} />;
+    case 'TRIP_STARTED':
+      return <Zap size={20} color={colors.warning} />;
+    case 'TRIP_COMPLETED':
+      return <Flag size={20} color={colors.success} />;
+    case 'FUEL_ANOMALY':
+      return <Fuel size={20} color={colors.warning} />;
+    case 'MAINTENANCE':
+      return <Wrench size={20} color="#7C3AED" />;
+    default:
+      return <Megaphone size={20} color={colors.primary} />;
+  }
 };
 
 export default function NotificationsScreen() {
@@ -67,7 +88,7 @@ export default function NotificationsScreen() {
       activeOpacity={0.85}
     >
       <View style={styles.iconWrap}>
-        <Text style={styles.icon}>{TYPE_ICON[item.type] || '📢'}</Text>
+        {getTypeIcon(item.type)}
       </View>
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
@@ -104,7 +125,9 @@ export default function NotificationsScreen() {
         </View>
       ) : notifications.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyIcon}>🔔</Text>
+          <View style={styles.emptyIconCircle}>
+            <Bell size={36} color={colors.primary} />
+          </View>
           <Text style={styles.emptyTitle}>No notifications</Text>
           <Text style={styles.emptyDesc}>You're all caught up!</Text>
         </View>
@@ -190,7 +213,15 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10 },
-  emptyIcon: { fontSize: 48 },
+  emptyIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   emptyDesc: { fontSize: 13, color: colors.textMuted },
 });

@@ -9,6 +9,16 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import {
+  MapPin,
+  Flag,
+  User,
+  Car,
+  UserCheck,
+  Repeat,
+  ArrowRight,
+  RefreshCw,
+} from 'lucide-react-native';
 import { tripsApi } from '../../src/services/api';
 import { useMobileStore } from '../../src/store/useMobileStore';
 import { AppHeader } from '../../src/components/AppHeader';
@@ -48,8 +58,9 @@ export default function MyTripsScreen() {
               <Text style={[styles.badgeText, { color: s.text }]}>{s.label}</Text>
             </View>
             {isCustom && (
-              <View style={[styles.badge, { backgroundColor: '#EFF6FF', borderColor: '#BEDBFF', borderWidth: 1 }]}>
-                <Text style={[styles.badgeText, { color: '#2B7FFF', fontSize: 10 }]}>📍 Custom Location</Text>
+              <View style={[styles.badge, { backgroundColor: '#EFF6FF', borderColor: '#BEDBFF', borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 3 }]}>
+                <MapPin size={10} color="#2B7FFF" />
+                <Text style={[styles.badgeText, { color: '#2B7FFF', fontSize: 10 }]}>Custom Location</Text>
               </View>
             )}
           </View>
@@ -59,9 +70,19 @@ export default function MyTripsScreen() {
         </View>
 
         <View style={styles.route}>
-          <Text style={styles.routeFrom} numberOfLines={2}>📍 {fromLoc}</Text>
+          <View style={styles.routeCol}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <MapPin size={12} color="#2B7FFF" />
+              <Text style={styles.routeFrom} numberOfLines={2}>{fromLoc}</Text>
+            </View>
+          </View>
           <Text style={styles.routeArrow}>→</Text>
-          <Text style={styles.routeTo} numberOfLines={2}>🏁 {toLoc}</Text>
+          <View style={styles.routeCol}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+              <Flag size={12} color="#EF4444" />
+              <Text style={styles.routeTo} numberOfLines={2}>{toLoc}</Text>
+            </View>
+          </View>
         </View>
 
         <Text style={styles.purpose} numberOfLines={2}>{item.purpose}</Text>
@@ -73,8 +94,9 @@ export default function MyTripsScreen() {
             <View style={styles.passengerTags}>
               {item.passengers.map((p: any) => (
                 <View key={p.id || p.employeeId || p.name} style={styles.passengerTag}>
+                  <User size={10} color="#525252" style={{ marginRight: 3 }} />
                   <Text style={styles.passengerTagText}>
-                    👤 {p.name}{p.employeeId ? ` (${p.employeeId})` : ''}
+                    {p.name}{p.employeeId ? ` (${p.employeeId})` : ''}
                   </Text>
                 </View>
               ))}
@@ -84,6 +106,7 @@ export default function MyTripsScreen() {
 
         {item.vehicle && (
           <View style={styles.assignedRow}>
+            <Car size={13} color="#878787" />
             <Text style={styles.assignedLabel}>Vehicle:</Text>
             <Text style={styles.assignedValue}>
               {item.vehicle.make} {item.vehicle.model} · {item.vehicle.registrationNo}
@@ -92,15 +115,31 @@ export default function MyTripsScreen() {
         )}
         {item.driver && (
           <View style={styles.assignedRow}>
+            <UserCheck size={13} color="#878787" />
             <Text style={styles.assignedLabel}>Driver:</Text>
             <Text style={styles.assignedValue}>{item.driver.user?.name}</Text>
           </View>
         )}
 
         <View style={styles.tripType}>
-          <Text style={styles.tripTypeText}>
-            {item.tripType === 'ROUND_TRIP' ? '🔄 Round Trip' : item.tripType === 'ONE_WAY' ? '➡️ One Way' : '🔁 Pickup & Drop-off'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            {item.tripType === 'ROUND_TRIP' ? (
+              <>
+                <Repeat size={12} color="#878787" />
+                <Text style={styles.tripTypeText}>Round Trip</Text>
+              </>
+            ) : item.tripType === 'ONE_WAY' ? (
+              <>
+                <ArrowRight size={12} color="#878787" />
+                <Text style={styles.tripTypeText}>One Way</Text>
+              </>
+            ) : (
+              <>
+                <RefreshCw size={12} color="#878787" />
+                <Text style={styles.tripTypeText}>Pickup & Drop-off</Text>
+              </>
+            )}
+          </View>
         </View>
       </View>
     );
@@ -117,7 +156,9 @@ export default function MyTripsScreen() {
         </View>
       ) : trips.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyIcon}>🚗</Text>
+          <View style={styles.emptyIconCircle}>
+            <Car size={36} color="#2B7FFF" />
+          </View>
           <Text style={styles.emptyTitle}>No trips yet</Text>
           <Text style={styles.emptyDesc}>Submit your first vehicle requisition</Text>
           <TouchableOpacity
@@ -180,6 +221,7 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 11, fontWeight: '700' },
   date: { fontSize: 11, color: '#878787', fontWeight: '500' },
   route: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  routeCol: { flex: 1 },
   routeFrom: { fontSize: 13, color: '#171717', fontWeight: '600', flex: 1 },
   routeArrow: { fontSize: 12, color: '#2B7FFF', fontWeight: '700' },
   routeTo: { fontSize: 13, color: '#171717', fontWeight: '600', flex: 1, textAlign: 'right' },
@@ -194,6 +236,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   passengerTagText: { fontSize: 11, color: '#525252', fontWeight: '500' },
   assignedRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
@@ -203,7 +247,15 @@ const styles = StyleSheet.create({
   tripTypeText: { fontSize: 11, color: '#878787', fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   loadingText: { color: '#878787', fontSize: 13, marginTop: 8 },
-  emptyIcon: { fontSize: 48 },
+  emptyIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#171717' },
   emptyDesc: { fontSize: 13, color: '#525252' },
   emptyBtn: {
