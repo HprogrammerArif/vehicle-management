@@ -60,6 +60,9 @@ export const tripsApi = {
     mobileApi(`/trips/${id}/start`, { method: 'PUT', body: JSON.stringify({ startOdometer }) }),
   completeTrip: (id: string, endOdometer: number) =>
     mobileApi(`/trips/${id}/complete`, { method: 'PUT', body: JSON.stringify({ endOdometer }) }),
+  cancelTrip: (id: string) =>
+    mobileApi(`/trips/${id}/cancel`, { method: 'PUT' }),
+  getTripById: (id: string) => mobileApi(`/trips/${id}`),
 };
 
 
