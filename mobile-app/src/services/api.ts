@@ -2,12 +2,13 @@ import { useMobileStore } from '../store/useMobileStore';
 
 // Mobile API Client
 // Note: For local development on physical Android device or emulator, replace localhost with your LAN IP (e.g. 192.168.x.x)
-const API_BASE_URL = 'http://10.10.29.137:5000/api';
+const API_BASE_URL = 'https://vehicle-management-a6yi.onrender.com/api';
+// const API_BASE_URL = 'http://10.10.29.137:5000/api';
 
 export async function mobileApi<T = any>(
   endpoint: string,
   options: RequestInit = {}
-): Promise<{ success: boolean; data?: T; message?: string; token?: string; user?: any; count?: number; [key: string]: any }> {
+): Promise<{ success: boolean; data?: T; message?: string; token?: string; user?: any; count?: number;[key: string]: any }> {
   const token = useMobileStore.getState().token;
 
   const headers: HeadersInit = {
