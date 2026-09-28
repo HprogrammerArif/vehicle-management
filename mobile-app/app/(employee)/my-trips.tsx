@@ -12,7 +12,9 @@ import {
   Pressable,
   Animated,
   ScrollView,
+  Platform,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useRouter } from 'expo-router';
 import {
   MapPin,
@@ -325,8 +327,12 @@ function CancelModal({ visible, tripId, onClose, onConfirm }: CancelModalProps) 
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <Pressable style={cmStyles.backdrop} onPress={handleClose}>
-        <Pressable style={cmStyles.sheet} onPress={() => {}}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <Pressable style={cmStyles.backdrop} onPress={handleClose}>
+          <Pressable style={cmStyles.sheet} onPress={() => {}}>
           <View style={cmStyles.iconWrap}>
             <AlertTriangle size={28} color="#D97706" />
           </View>
@@ -367,6 +373,7 @@ function CancelModal({ visible, tripId, onClose, onConfirm }: CancelModalProps) 
           </View>
         </Pressable>
       </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

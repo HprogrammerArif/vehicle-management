@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   Calendar,
@@ -48,6 +50,7 @@ const LEAVE_TYPES: { type: LeaveType; label: string; icon: any; color: string; b
 
 export default function DriverLeaveScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useMobileStore();
   const { showToast } = useToast();
 
@@ -152,9 +155,9 @@ export default function DriverLeaveScreen() {
   const pendingCount = leaves.filter((l) => !l.isApproved).length;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { paddingBottom: insets.bottom }]}>
       {/* Top Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 8, 48) }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <ChevronLeft size={20} color="#1E293B" />
         </TouchableOpacity>
@@ -209,7 +212,12 @@ export default function DriverLeaveScreen() {
 
       {/* Apply Leave Tab */}
       {activeTab === 'apply' ? (
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.formContainer} keyboardShouldPersistTaps="handled">
+        <KeyboardAwareScrollView
+          style={styles.scroll}
+          contentContainerStyle={[styles.formContainer, { paddingBottom: Math.max(insets.bottom + 24, 40) }]}
+          keyboardShouldPersistTaps="handled"
+          bottomOffset={40}
+        >
           <Text style={styles.sectionTitle}>Select Leave Category</Text>
           <View style={styles.typeGrid}>
             {LEAVE_TYPES.map((t) => {
@@ -301,12 +309,12 @@ export default function DriverLeaveScreen() {
               </>
             )}
           </TouchableOpacity>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       ) : (
         /* History Tab */
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={{ padding: 18, gap: 12, paddingBottom: 40 }}
+          contentContainerStyle={{ padding: 18, gap: 12, paddingBottom: Math.max(insets.bottom + 24, 40) }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2B7FFF" />}
         >
           {loadingHistory ? (

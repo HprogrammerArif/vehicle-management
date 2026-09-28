@@ -5,12 +5,12 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  KeyboardAvoidingView,
   Platform,
   StyleSheet,
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -394,8 +394,8 @@ export const ChatThreadView: React.FC<ChatThreadViewProps> = ({ conversationId, 
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={85}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      automaticOffset
       style={styles.container}
     >
       {/* Top Header Bar — respects device status bar height */}

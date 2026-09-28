@@ -1,6 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useMobileStore } from '../src/store/useMobileStore';
 import { getMobileSocket } from '../src/services/socket';
 import { ToastProvider, useToast } from '../src/components/AppToast';
@@ -104,39 +105,42 @@ export default function RootLayout() {
   }, [initAuth]);
 
   return (
-    <ToastProvider>
-      <AlertModalProvider>
-        <StatusBar style="dark" />
-        <AuthGuard />
-        <NotificationListener />
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: '#ffffff' },
-            headerTintColor: '#171717',
-            headerTitleStyle: { fontWeight: '700', fontSize: 17 },
-            headerShadowVisible: false,
-            contentStyle: { backgroundColor: '#F8FAFC' },
-          }}
-        >
-          {/* Auth */}
-          <Stack.Screen name="index" options={{ title: 'Apex VMS', headerShown: false }} />
+    <KeyboardProvider>
+      <ToastProvider>
+        <AlertModalProvider>
+          <StatusBar style="dark" />
+          <AuthGuard />
+          <NotificationListener />
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: '#ffffff' },
+              headerTintColor: '#171717',
+              headerTitleStyle: { fontWeight: '700', fontSize: 17 },
+              headerShadowVisible: false,
+              contentStyle: { backgroundColor: '#F8FAFC' },
+            }}
+          >
+            {/* Auth */}
+            <Stack.Screen name="index" options={{ title: 'Apex VMS', headerShown: false }} />
 
-          {/* Employee Screens */}
-          <Stack.Screen name="(employee)/my-trips" options={{ title: 'My Requisitions' }} />
-          <Stack.Screen name="(employee)/request-trip" options={{ title: 'New Trip Request' }} />
-          <Stack.Screen name="(employee)/notifications" options={{ title: 'Notifications' }} />
-          <Stack.Screen name="(employee)/conversations" options={{ title: 'Support & Dispatch Chat' }} />
-          <Stack.Screen name="(employee)/chat/[id]" options={{ headerShown: false }} />
+            {/* Employee Screens */}
+            <Stack.Screen name="(employee)/my-trips" options={{ title: 'My Requisitions' }} />
+            <Stack.Screen name="(employee)/request-trip" options={{ title: 'New Trip Request' }} />
+            <Stack.Screen name="(employee)/notifications" options={{ title: 'Notifications' }} />
+            <Stack.Screen name="(employee)/conversations" options={{ title: 'Support & Dispatch Chat' }} />
+            <Stack.Screen name="(employee)/chat/[id]" options={{ headerShown: false }} />
 
-          {/* Driver Screens */}
-          <Stack.Screen name="(driver)/active-trip" options={{ title: 'Active Mission' }} />
-          <Stack.Screen name="(driver)/my-trips" options={{ title: 'My Assigned Trips' }} />
-          <Stack.Screen name="(driver)/fuel-log" options={{ title: 'Submit Fuel Receipt' }} />
-          <Stack.Screen name="(driver)/notifications" options={{ title: 'Notifications' }} />
-          <Stack.Screen name="(driver)/conversations" options={{ title: 'Fleet Dispatch Chat' }} />
-          <Stack.Screen name="(driver)/chat/[id]" options={{ headerShown: false }} />
-        </Stack>
-      </AlertModalProvider>
-    </ToastProvider>
+            {/* Driver Screens */}
+            <Stack.Screen name="(driver)/active-trip" options={{ title: 'Active Mission' }} />
+            <Stack.Screen name="(driver)/my-trips" options={{ title: 'My Assigned Trips' }} />
+            <Stack.Screen name="(driver)/fuel-log" options={{ title: 'Submit Fuel Receipt' }} />
+            <Stack.Screen name="(driver)/notifications" options={{ title: 'Notifications' }} />
+            <Stack.Screen name="(driver)/conversations" options={{ title: 'Fleet Dispatch Chat' }} />
+            <Stack.Screen name="(driver)/chat/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="(driver)/leave" options={{ headerShown: false }} />
+          </Stack>
+        </AlertModalProvider>
+      </ToastProvider>
+    </KeyboardProvider>
   );
 }

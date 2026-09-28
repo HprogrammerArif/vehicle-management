@@ -4,10 +4,11 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   MapPin,
@@ -165,8 +166,14 @@ export default function RequestTripScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Request Corporate Vehicle</Text>
+    <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+      <KeyboardAwareScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        bottomOffset={40}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>Request Corporate Vehicle</Text>
       <Text style={styles.subtitle}>Submit a vehicle requisition for admin approval</Text>
 
       {/* ── Pickup Location ── */}
@@ -374,7 +381,8 @@ export default function RequestTripScreen() {
           <Text style={styles.submitText}>Submit Requisition</Text>
         )}
       </TouchableOpacity>
-    </ScrollView>
+      </KeyboardAwareScrollView>
+    </SafeAreaView>
   );
 }
 

@@ -10,7 +10,9 @@ import {
   TextInput,
   Modal,
   Linking,
+  Platform,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import {
@@ -510,8 +512,11 @@ export default function ActiveTripScreen() {
         )}
 
         {/* Start Journey Modal */}
-        <Modal visible={showStartModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
+        <Modal visible={showStartModal} transparent animationType="slide" onRequestClose={() => setShowStartModal(false)}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>Commence Journey</Text>
               <Text style={styles.modalSubtitle}>
@@ -574,12 +579,15 @@ export default function ActiveTripScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Complete Trip Modal */}
-        <Modal visible={showCompleteModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
+        <Modal visible={showCompleteModal} transparent animationType="slide" onRequestClose={() => setShowCompleteModal(false)}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>Finalize Trip</Text>
               <Text style={styles.modalSubtitle}>
@@ -616,12 +624,15 @@ export default function ActiveTripScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Breakdown / SOS Modal */}
-        <Modal visible={showBreakdownModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
+        <Modal visible={showBreakdownModal} transparent animationType="slide" onRequestClose={() => setShowBreakdownModal(false)}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalOverlay}
+          >
             <View style={styles.modalCard}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <AlertTriangle size={20} color="#EF4444" />
@@ -694,7 +705,7 @@ export default function ActiveTripScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
       </ScrollView>
     </View>

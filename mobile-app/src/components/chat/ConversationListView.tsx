@@ -9,7 +9,10 @@ import {
   RefreshControl,
   Modal,
   TextInput,
+  Platform,
 } from 'react-native';
+import { KeyboardAvoidingView, KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   MessageSquare,
@@ -35,6 +38,7 @@ export const ConversationListView: React.FC<ConversationListViewProps> = ({ role
   const router = useRouter();
   const { user } = useMobileStore();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -275,74 +279,84 @@ export const ConversationListView: React.FC<ConversationListViewProps> = ({ role
       )}
 
       {/* New Conversation Modal */}
-      <Modal visible={isModalOpen} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Contact Fleet Management</Text>
-            <Text style={styles.modalSubtitle}>
-              Open a direct real-time communication channel with central dispatch
-            </Text>
+      <Modal visible={isModalOpen} transparent animationType="slide" onRequestClose={() => setIsModalOpen(false)}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={[styles.modalContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+            <KeyboardAwareScrollView
+              bottomOffset={24}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
+              <Text style={styles.modalTitle}>Contact Fleet Management</Text>
+              <Text style={styles.modalSubtitle}>
+                Open a direct real-time communication channel with central dispatch
+              </Text>
 
-            {/* Type selector */}
-            <View style={styles.typeSelector}>
-              {(['SUPPORT', 'INCIDENT', 'GENERAL'] as const).map((t) => (
+              {/* Type selector */}
+              <View style={styles.typeSelector}>
+                {(['SUPPORT', 'INCIDENT', 'GENERAL'] as const).map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    style={[styles.typeButton, newType === t && styles.activeTypeButton]}
+                    onPress={() => setNewType(t)}
+                  >
+                    <Text style={[styles.typeButtonText, newType === t && styles.activeTypeButtonText]}>
+                      {t}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Subject Input */}
+              <Text style={styles.inputLabel}>Subject / Topic</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="e.g. Schedule delay, vehicle issue..."
+                placeholderTextColor={colors.textMuted}
+                value={newSubject}
+                onChangeText={setNewSubject}
+              />
+
+              {/* Initial Message Input */}
+              <Text style={styles.inputLabel}>Initial Message (Optional)</Text>
+              <TextInput
+                style={[styles.modalInput, styles.modalTextArea]}
+                placeholder="Describe what you need assistance with..."
+                placeholderTextColor={colors.textMuted}
+                value={newInitialMsg}
+                onChangeText={setNewInitialMsg}
+                multiline
+                numberOfLines={3}
+              />
+
+              {/* Modal Actions */}
+              <View style={styles.modalActions}>
                 <TouchableOpacity
-                  key={t}
-                  style={[styles.typeButton, newType === t && styles.activeTypeButton]}
-                  onPress={() => setNewType(t)}
+                  style={styles.cancelButton}
+                  onPress={() => setIsModalOpen(false)}
+                  disabled={creating}
                 >
-                  <Text style={[styles.typeButtonText, newType === t && styles.activeTypeButtonText]}>
-                    {t}
-                  </Text>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Subject Input */}
-            <Text style={styles.inputLabel}>Subject / Topic</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="e.g. Schedule delay, vehicle issue..."
-              placeholderTextColor={colors.textMuted}
-              value={newSubject}
-              onChangeText={setNewSubject}
-            />
-
-            {/* Initial Message Input */}
-            <Text style={styles.inputLabel}>Initial Message (Optional)</Text>
-            <TextInput
-              style={[styles.modalInput, styles.modalTextArea]}
-              placeholder="Describe what you need assistance with..."
-              placeholderTextColor={colors.textMuted}
-              value={newInitialMsg}
-              onChangeText={setNewInitialMsg}
-              multiline
-              numberOfLines={3}
-            />
-
-            {/* Modal Actions */}
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setIsModalOpen(false)}
-                disabled={creating}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.submitButton, (!newSubject.trim() || creating) && styles.submitButtonDisabled]}
-                onPress={handleCreateConversation}
-                disabled={!newSubject.trim() || creating}
-              >
-                {creating ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  <Text style={styles.submitButtonText}>Start Chat</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity
+                  style={[styles.submitButton, (!newSubject.trim() || creating) && styles.submitButtonDisabled]}
+                  onPress={handleCreateConversation}
+                  disabled={!newSubject.trim() || creating}
+                >
+                  {creating ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.submitButtonText}>Start Chat</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </KeyboardAwareScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -529,6 +543,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
+    maxHeight: '85%',
     borderTopWidth: 1,
     borderTopColor: colors.border,
     shadowColor: '#000',

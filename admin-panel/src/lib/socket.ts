@@ -4,7 +4,7 @@ let socket: Socket | null = null;
 
 export const getSocket = (): Socket => {
   if (!socket) {
-    socket = io('http://localhost:5000', {
+    socket = io('https://vehicle-management-a6yi.onrender.com', {
       transports: ['websocket', 'polling'],
       autoConnect: true,
     });

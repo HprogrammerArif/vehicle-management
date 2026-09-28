@@ -4,13 +4,14 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   FlatList,
   StyleSheet,
   Image,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -197,6 +198,7 @@ function SummaryBar({ logs }: { logs: FuelLogEntry[] }) {
 // ─────────────────────────────────────────────
 export default function FuelLogScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     vehicleId?: string;
     tripId?: string;
@@ -369,9 +371,9 @@ export default function FuelLogScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { paddingBottom: insets.bottom }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 48) }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <ChevronLeft size={20} color="#1E293B" />
         </TouchableOpacity>
@@ -403,7 +405,12 @@ export default function FuelLogScreen() {
 
       {/* ── New Entry Tab ── */}
       {activeTab === 'form' && (
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled">
+        <KeyboardAwareScrollView
+          style={styles.scroll}
+          contentContainerStyle={[styles.formContent, { paddingBottom: Math.max(insets.bottom + 24, 40) }]}
+          keyboardShouldPersistTaps="handled"
+          bottomOffset={40}
+        >
           {/* Vehicle Display Banner */}
           {selectedVehicle ? (
             <View style={styles.vehicleBanner}>
@@ -534,7 +541,7 @@ export default function FuelLogScreen() {
               </>
             )}
           </TouchableOpacity>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       )}
 
       {/* ── History Tab ── */}
