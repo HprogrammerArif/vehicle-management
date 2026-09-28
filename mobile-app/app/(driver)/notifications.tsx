@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { notificationsApi } from '../../src/services/api';
 import { useMobileStore } from '../../src/store/useMobileStore';
 import {
@@ -29,6 +30,7 @@ const getTypeIcon = (type: string) => {
 };
 
 export default function DriverNotificationsScreen() {
+  const router = useRouter();
   const { setUnreadNotifCount } = useMobileStore();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,13 +59,50 @@ export default function DriverNotificationsScreen() {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
   };
 
+  const handlePressItem = async (item: any) => {
+    if (!item.isRead) {
+      handleMarkRead(item.id);
+    }
+
+    // Parse notification data payload if present
+    let payload: any = null;
+    if (typeof item.data === 'string') {
+      try {
+        payload = JSON.parse(item.data);
+      } catch (_) {}
+    } else if (typeof item.data === 'object') {
+      payload = item.data;
+    }
+
+    if (payload?.conversationId) {
+      router.push(`/(driver)/chat/${payload.conversationId}`);
+      return;
+    }
+
+    if (
+      item.type === 'TRIP_ASSIGNED' ||
+      item.type === 'TRIP_STARTED' ||
+      item.type === 'TRIP_APPROVED' ||
+      item.type === 'TRIP_COMPLETED' ||
+      payload?.tripId
+    ) {
+      router.push('/(driver)/active-trip');
+      return;
+    }
+
+    if (item.type === 'FUEL_ANOMALY') {
+      router.push('/(driver)/fuel-log');
+      return;
+    }
+  };
+
   const onRefresh = () => { setRefreshing(true); fetchNotifications(); };
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={[styles.card, !item.isRead && styles.cardUnread]}
-      onPress={() => !item.isRead && handleMarkRead(item.id)}
+      onPress={() => handlePressItem(item)}
       activeOpacity={0.85}
     >
       <View style={styles.iconWrap}>

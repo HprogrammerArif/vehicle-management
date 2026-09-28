@@ -171,3 +171,35 @@ export const fuelApi = {
       body: JSON.stringify(data),
     }),
 };
+
+// Driver API (Leave requests, profile)
+export const driverApi = {
+  getDriverDetails: (driverId: string) => mobileApi(`/drivers/${driverId}`),
+  requestLeave: (data: {
+    driverId?: string;
+    leaveType: 'SICK' | 'VACATION' | 'PERSONAL' | 'HOLIDAY';
+    startDate: string;
+    endDate: string;
+    reason?: string;
+  }) =>
+    mobileApi('/drivers/leave', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+
+// Maintenance & Breakdown API
+export const maintenanceApi = {
+  reportBreakdown: (data: {
+    vehicleId: string;
+    type: 'BREAKDOWN' | 'TIRE_CHANGE' | 'OIL_CHANGE' | 'OTHER';
+    description: string;
+    odometerAt?: number;
+    setInMaintenance?: boolean;
+  }) =>
+    mobileApi('/maintenance', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+};
+

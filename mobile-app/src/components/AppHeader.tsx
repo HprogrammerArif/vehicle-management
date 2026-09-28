@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Fuel,
   Plus,
+  Calendar,
 } from 'lucide-react-native';
 import { useMobileStore } from '../store/useMobileStore';
 import { getMobileSocket } from '../services/socket';
@@ -16,7 +17,7 @@ import { useAppAlert } from './AppAlert';
 
 interface AppHeaderProps {
   title?: string;
-  activeScreen?: 'my-trips' | 'request-trip' | 'active-trip' | 'fuel-log' | 'notifications' | 'chat';
+  activeScreen?: 'my-trips' | 'request-trip' | 'active-trip' | 'fuel-log' | 'notifications' | 'chat' | 'leave';
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => {
@@ -182,6 +183,25 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, activeScreen }) => 
                 ]}
               >
                 Fuel Log
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.navTab, activeScreen === 'leave' && styles.navTabActive]}
+              onPress={() => router.push('/(driver)/leave')}
+            >
+              <Calendar
+                size={13}
+                color={activeScreen === 'leave' ? '#ffffff' : '#525252'}
+                style={{ marginRight: 4 }}
+              />
+              <Text
+                style={[
+                  styles.navTabText,
+                  activeScreen === 'leave' && styles.navTabTextActive,
+                ]}
+              >
+                Leave
               </Text>
             </TouchableOpacity>
           </>

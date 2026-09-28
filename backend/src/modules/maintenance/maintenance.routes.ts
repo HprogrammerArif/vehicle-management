@@ -9,7 +9,7 @@ import { authenticate, authorize } from '../../middleware/auth';
 const router = Router();
 
 router.get('/', authenticate, getMaintenanceLogs);
-router.post('/', authenticate, authorize(['ADMIN']), createMaintenanceLog);
+router.post('/', authenticate, authorize(['ADMIN', 'DRIVER']), createMaintenanceLog);
 router.put('/:id/complete', authenticate, authorize(['ADMIN']), completeMaintenance);
 
 export default router;

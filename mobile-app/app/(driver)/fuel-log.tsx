@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -26,8 +26,9 @@ import {
   DollarSign,
   Droplets,
   ChevronLeft,
+  Car,
 } from 'lucide-react-native';
-import { mobileApi, mobileChatApi } from '../../src/services/api';
+import { mobileApi, mobileChatApi, tripsApi } from '../../src/services/api';
 import { useMobileStore } from '../../src/store/useMobileStore';
 import { useToast } from '../../src/components/AppToast';
 
@@ -191,14 +192,36 @@ function SummaryBar({ logs }: { logs: FuelLogEntry[] }) {
 }
 
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
 // Main Screen
 // ─────────────────────────────────────────────
 export default function FuelLogScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    vehicleId?: string;
+    tripId?: string;
+    plateNumber?: string;
+    makeModel?: string;
+  }>();
   const { user } = useMobileStore();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
+
+  // Selected vehicle state
+  const [selectedVehicle, setSelectedVehicle] = useState<{
+    id: string;
+    plateNumber?: string;
+    makeModel?: string;
+  } | null>(
+    params.vehicleId
+      ? {
+          id: params.vehicleId,
+          plateNumber: params.plateNumber,
+          makeModel: params.makeModel,
+        }
+      : null
+  );
 
   // Form state
   const [odometer, setOdometer] = useState('');
@@ -212,6 +235,29 @@ export default function FuelLogScreen() {
   const [logs, setLogs] = useState<FuelLogEntry[]>([]);
   const [histLoading, setHistLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Auto-resolve vehicle from active trip if not provided in params
+  useEffect(() => {
+    if (!selectedVehicle?.id) {
+      tripsApi.getMyTrips().then((res) => {
+        if (res.success && Array.isArray(res.data)) {
+          const current = res.data.find(
+            (t: any) => t.status === 'IN_PROGRESS' || t.status === 'APPROVED'
+          );
+          if (current?.vehicle) {
+            setSelectedVehicle({
+              id: current.vehicle.id,
+              plateNumber: current.vehicle.registrationNo,
+              makeModel: `${current.vehicle.make || ''} ${current.vehicle.model || ''}`.trim(),
+            });
+            if (current.vehicle.odometer && !odometer) {
+              setOdometer(String(current.vehicle.odometer));
+            }
+          }
+        }
+      });
+    }
+  }, [selectedVehicle?.id]);
 
   const fetchHistory = useCallback(async (silent = false) => {
     if (!silent) setHistLoading(true);
@@ -258,6 +304,15 @@ export default function FuelLogScreen() {
   };
 
   const handleLogFuel = async () => {
+    if (!selectedVehicle?.id) {
+      showToast({
+        type: 'warning',
+        title: 'Vehicle Required',
+        message: 'No assigned vehicle detected. Ensure an active trip exists or select a vehicle.',
+      });
+      return;
+    }
+
     if (!odometer || !liters || !price) {
       showToast({
         type: 'warning',
@@ -279,8 +334,9 @@ export default function FuelLogScreen() {
     const res = await mobileApi('/fuel', {
       method: 'POST',
       body: JSON.stringify({
-        vehicleId: 'cmuf7t2m6000lf6wpsjwhb0i5',
-        driverId: user?.driverId || 'cmuf7sv730009f6wp06cs1lke',
+        vehicleId: selectedVehicle.id,
+        driverId: user?.driverId,
+        tripId: params.tripId || undefined,
         odometerReading: parseFloat(odometer),
         fuelAdded: parseFloat(liters),
         pricePerLiter: parseFloat(price),
@@ -348,6 +404,33 @@ export default function FuelLogScreen() {
       {/* ── New Entry Tab ── */}
       {activeTab === 'form' && (
         <ScrollView style={styles.scroll} contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled">
+          {/* Vehicle Display Banner */}
+          {selectedVehicle ? (
+            <View style={styles.vehicleBanner}>
+              <View style={styles.vehicleIconCircle}>
+                <Car size={16} color="#2B7FFF" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.vehicleBannerName} numberOfLines={1}>
+                  {selectedVehicle.makeModel || 'Assigned Vehicle'}
+                </Text>
+                <Text style={styles.vehicleBannerPlate}>
+                  {selectedVehicle.plateNumber || 'Fleet Vehicle'}
+                </Text>
+              </View>
+              <View style={styles.vehicleActivePill}>
+                <Text style={styles.vehicleActivePillText}>Active Vehicle</Text>
+              </View>
+            </View>
+          ) : (
+            <View style={[styles.vehicleBanner, { borderColor: '#FDE68A', backgroundColor: '#FEF3C6' }]}>
+              <AlertTriangle size={16} color="#D97706" />
+              <Text style={{ fontSize: 12, color: '#92400E', flex: 1, marginLeft: 6 }}>
+                No vehicle actively assigned. Admin will link your fuel log based on dispatch record.
+              </Text>
+            </View>
+          )}
+
           {/* Photo Picker */}
           <TouchableOpacity style={styles.photoBox} onPress={takePhoto}>
             {receiptImage ? (
@@ -537,6 +620,34 @@ const styles = StyleSheet.create({
 
   scroll: { flex: 1 },
   formContent: { padding: 20, gap: 16, paddingBottom: 40 },
+
+  vehicleBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#BEDBFF',
+  },
+  vehicleIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#DBEAFE',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  vehicleBannerName: { fontSize: 13, fontWeight: '700', color: '#1E293B' },
+  vehicleBannerPlate: { fontSize: 11, fontWeight: '600', color: '#64748B', marginTop: 1 },
+  vehicleActivePill: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  vehicleActivePillText: { fontSize: 10, fontWeight: '800', color: '#16A34A' },
 
   photoBox: {
     height: 150,
