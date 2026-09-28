@@ -1,9 +1,10 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://vehicle-management-a6yi.onrender.com/api';
+// const API_BASE_URL = 'http://localhost:5000/api';
 
 export async function apiRequest<T = any>(
   endpoint: string,
   options: RequestInit = {}
-): Promise<{ success: boolean; data?: T; message?: string; token?: string; user?: any; count?: number; [key: string]: any }> {
+): Promise<{ success: boolean; data?: T; message?: string; token?: string; user?: any; count?: number;[key: string]: any }> {
   const token = localStorage.getItem('vms_token');
 
   const headers: HeadersInit = {
