@@ -45,7 +45,7 @@ router.post('/upload', authenticate, upload.single('file'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file provided' });
     }
-    const fileUrl = `http://localhost:5000/uploads/chat/${req.file.filename}`;
+    const fileUrl = `https://vehicle-management-a6yi.onrender.com/uploads/chat/${req.file.filename}`;
     return res.json({
       success: true,
       url: fileUrl,

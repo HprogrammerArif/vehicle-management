@@ -121,7 +121,7 @@ export const api = {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const response = await fetch('http://localhost:5000/api/chat/upload', {
+      const response = await fetch('https://vehicle-management-a6yi.onrender.com/api/chat/upload', {
         method: 'POST',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
