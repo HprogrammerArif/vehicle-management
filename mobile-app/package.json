@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "babel-preset-expo": "~57.0.12",
     "expo": "~57.0.24",
     "expo-constants": "~57.0.19",
     "expo-image-picker": "~57.0.19",
